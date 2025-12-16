@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-primary text-foreground bg-background antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-secondary;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-primary text-white px-6 py-2.5 rounded-base font-semibold transition-opacity duration-300 hover:opacity-90;
+  }
+  .btn-outline {
+    @apply border-2 border-brand-primary text-brand-primary px-6 py-2.5 rounded-base font-semibold transition-colors duration-300 hover:bg-brand-primary hover:text-white;
+  }
+  .highlight-badge {
+    @apply bg-brand-accent text-gray-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  }
+}

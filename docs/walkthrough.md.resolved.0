@@ -1,0 +1,63 @@
+# SHUBAKAR Project Walkthrough
+
+## Completed Features
+
+### 1. Project Architecture
+- Monorepo structure (`backend`, `frontend`, `ai-budget-assistant`).
+- Git initialized.
+- Tech Stack: Node.js, React (Vite), Python, MongoDB.
+
+### 2. Backend (Node.js/Express)
+- **Authentication**: JWT-based auth with User models (Customer, Vendor, Admin).
+- **Vendor Management**: Profile creation, Admin approval workflow, and Search.
+- **Booking System**: Event creation, Booking requests, Status management.
+- **Real-time Chat**: Socket.IO integration for Booking-scoped chat rooms.
+
+### 3. Frontend (React + Tailwind)
+- **Design System**: Implemented SHUBAKAR design tokens (Coral, Turquoise, Yellow) and Typography.
+- **Pages**:
+  - **Home**: Landing page with Vendor Search.
+  - **Auth**: fully functional Login and Register pages integrated with Backend API.
+  - **Vendor**: Registration wizard (UI) and Vendor Search (UI).
+  - **Dashboard**: Customer dashboard showing Event stats and Bookings (Mock Data).
+  - **AI Planner**: UI for Budget estimation interfacing with the Python Service.
+
+### 4. AI Service (Python)
+- Flask app with `predict-budget` endpoint.
+- Rule-based logic to estimate event costs based on Guest count and Type.
+
+## How to Run
+
+### Backend
+```bash
+cd backend
+npm install
+npm start
+# Runs on localhost:5000
+```
+
+### AI Service
+```bash
+cd ai-budget-assistant
+pip install -r requirements.txt
+python app.py
+# Runs on localhost:5001
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# Runs on localhost:5173
+```
+
+## Verification Results
+- **Auth Flow**: Users can register and login. Token is stored in LocalStorage.
+- **UI/UX**: Responsive design following the "SHUBAKAR" brand guidelines.
+- **AI Integration**: The AI Planner page sends requests to the Python service (ensure Python app is running).
+
+## Next Steps
+- Connect Dashboard and Vendor Search to live API endpoints.
+- Implement file upload for Vendor Documents (using Multer).
+- Deploy to Cloud (Vercel/Render).

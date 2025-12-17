@@ -1,0 +1,48 @@
+# Project Task Checklist
+Current Phase: **Phase 5: Final Verification**
+
+- [x] **Phase 1: Setup & Initialization**
+    - [x] Structure the Mono-repo (Backend, Front-end, AI Service)
+    - [x] Initialize Node.js Backend (Express, Mongoose)
+    - [x] Initialize React Frontend (Vite, TailwindCSS)
+    - [x] Initialize Python AI Service (Flask)
+
+- [x] **Phase 2: Core Development & MVP**
+    - [x] **Authentication** (JWT, HttpOnly Cookies, Role-based)
+    - [x] **Vendor Management** (Profile creation, Service listing)
+    - [x] **Event Management** (Booking Requests, Status Updates)
+    - [x] **Discovery** (Vendor Search API)
+    - [x] **AI Integration** (Connect Flask to Node.js)
+
+- [x] **Phase 3: Reliability & Polish (Pre-Redesign)**
+    - [x] **Security Hardening**
+        - [x] Implement [ProtectedRoute](file:///d:/projects/shubkar/frontend/src/components/ProtectedRoute.jsx#5-48) wrapper
+        - [x] Secure Admin Routes
+    - [x] **UI Polish**
+        - [x] Redesign Landing Page (Hero, Features, Showcase)
+        - [x] Update Branding (Browser Title, Favicon, Logo Symbol)
+
+- [x] **Phase 4: Total Platform Redesign (The "Orchids" Standard)**
+    - [x] **Authentication Suite**
+        - [x] Redesign Login & Admin Login (Split screen feature)
+        - [x] Redesign Customer Registration
+        - [x] Redesign Vendor Registration (Step-wizard with progress)
+    - [x] **Core Dashboards**
+        - [x] Redesign Customer Dashboard (Welcome, Stats, Quick Actions)
+        - [x] Redesign Vendor Dashboard (Business Hub style)
+        - [x] Redesign Admin Dashboard (Clean Table & Actions)
+    - [x] **Discovery & Planning**
+        - [x] Redesign Vendor Search (Filters, Cards, Grid)
+        - [x] Polished AI Planner Interface (Chat bubble style)
+    - [x] **Monetization (New)**
+        - [x] Mock Payment & Invoice Integration (Checkout Page)
+
+- [ ] **Phase 5: Final Verification**
+    - [x] Admin Approval Flow (Verified)
+    - [ ] End-to-End Payment Flow (Pending: Fix [seed_booking.js](file:///d:/projects/shubkar/backend/seed_booking.js) role validation to verify)
+
+- [ ] **Phase 6: "Orchids" Registration Upgrade**
+    - [x] Update `VendorProfile` Model (Socials, Policies, Awards)
+    - [x] Update `authController` to handle extended data
+    - [ ] Redesign [VendorRegister](file:///d:/projects/shubkar/frontend/src/pages/VendorRegister.jsx#7-224) to Premium 4-Step Wizard
+    - [ ] Verify New Registration Flow

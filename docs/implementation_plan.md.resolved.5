@@ -1,0 +1,128 @@
+# SHUBAKAR Implementation Plan - Phase 1: Setup
+
+## Goal Description
+Initialize the mono-repo structure for SHUBAKAR, adhering to the strict folder structure. Set up the foundational frameworks for Backend (Node/Express), Frontend (React/Vite/Tailwind), and AI Service (Python).
+
+## User Review Required
+None for this initial setup phase as it follows standard patterns and user requirements.
+
+## Proposed Changes
+
+### Root Directory
+#### [NEW] [README.md](file:///d:/projects/shubakar/README.md)
+- Project documentation.
+
+### Backend [Setup]
+#### [NEW] [server.js](file:///d:/projects/shubakar/backend/server.js)
+- Entry point.
+#### [NEW] [package.json](file:///d:/projects/shubakar/backend/package.json)
+- Dependencies: express, mongoose, dotenv, cors, socket.io, jsonwebtoken, bcryptjs, nodemon.
+
+### Frontend [Setup]
+#### [NEW] [vite.config.js](file:///d:/projects/shubakar/frontend/vite.config.js)
+- Vite configuration.
+#### [NEW] [tailwind.config.js](file:///d:/projects/shubakar/frontend/tailwind.config.js)
+- Configuration with SHUBAKAR design tokens.
+
+### AI Assistant [Setup]
+#### [NEW] [app.py](file:///d:/projects/shubakar/ai-budget-assistant/app.py)
+- Flask/FastAPI entry point.
+#### [NEW] [requirements.txt](file:///d:/projects/shubakar/ai-budget-assistant/requirements.txt)
+- Dependencies: flask/fastapi, pandas, scikit-learn, numpy.
+
+## Verification Plan
+### Automated Tests
+- Run `npm start` in backend to verify server starts.
+- Run `npm run dev` in frontend to verify React app loads.
+- Run `python app.py` to verify AI service starts.
+
+# SHUBAKAR Implementation Plan - Phase 2: Enhancements & Verification
+
+## Goal Description
+Elevate the platform from MVP to "Best in Class" by adding high-value event planning tools and robust verification.
+
+## Proposed Changes
+
+### Frontend [New Features]
+#### [NEW] [Timeline.jsx](file:///d:/projects/shubkar/frontend/src/pages/Timeline.jsx)
+- Drag-and-drop interface for planning event schedule.
+#### [MODIFY] [Dashboard.jsx](file:///d:/projects/shubkar/frontend/src/pages/Dashboard.jsx)
+- Add "Smart Recommendations" and link to Timeline.
+
+### Backend [Verification]
+#### [NEW] [verify_api.js](file:///d:/projects/shubkar/backend/verify_api.js)
+- Automated script to test Auth, Vendor, and Booking endpoints against live MongoDB.
+
+## Verification Plan
+### Automated Tests
+- Run `node verify_api.js` to ensure all 15+ API endpoints return 200 OK.
+
+# SHUBAKAR Implementation Plan - Phase 3: Reliability & Security
+
+## Goal Description
+Secure the frontend against unauthorized access and enhance data collection for Vendors and Events.
+
+## Proposed Changes
+
+### Frontend [Security]
+#### [NEW] [ProtectedRoute.jsx](file:///d:/projects/shubkar/frontend/src/components/ProtectedRoute.jsx)
+- Wrapper component to check `localStorage` for token and user role. Redirects to `/login` if unauthorized.
+
+#### [MODIFY] [App.jsx](file:///d:/projects/shubkar/frontend/src/App.jsx)
+- Wrap `/dashboard`, `/vendor/dashboard`, `/admin` with [ProtectedRoute](file:///d:/projects/shubkar/frontend/src/components/ProtectedRoute.jsx#5-48).
+
+### Frontend [Enhancements]
+#### [MODIFY] [VendorRegister.jsx](file:///d:/projects/shubkar/frontend/src/pages/VendorRegister.jsx)
+- Add "Years of Experience", "Team Size", and "Website URL" fields.
+
+#### [MODIFY] [AIPlanEvent.jsx](file:///d:/projects/shubkar/frontend/src/pages/AIPlanEvent.jsx)
+- Update Event Type dropdown to include standard list + "Other" option with conditional text input.
+
+### Front-End Redesign [Home Page]
+#### [MODIFY] [Home.jsx](file:///d:/projects/shubkar/frontend/src/pages/Home.jsx)
+- **Hero Section**: Large typography, gradient text, "Plan Your Perfect Celebration".
+- **Vendor Showcase**: Grid of high-quality vendor cards.
+- **Dual CTA**: Split section for "Find Vendors" and "Join as Vendor".
+- **Trust Indicators**: Testimonials or stats.
+
+### Frontend [UI Polish]
+#### [MODIFY] [Navbar.jsx](file:///d:/projects/shubkar/frontend/src/components/Navbar.jsx)
+- Implement dynamic menu items based on user role (`localStorage`).
+- Add active state styling.
+- Ensure efficient logout flow.
+
+## Verification Plan
+### Manual Verification
+- Try accessing `/admin` without login -> Should redirect to Login.
+- Try accessing `/vendor/dashboard` as Customer -> Should redirect to Dashboard or Login.
+- Test "Other" event type flow in AI Planner.
+- **Navbar Verification**:
+    - Login as Customer -> Check for "Timeline", "Vendors", "AI Planner".
+    - Login as Vendor -> Check for "Requests", "Profile".
+    - Logout -> Check for "Home", "Login", "Join as Vendor".
+
+## Phase 4: Monetization & Polish
+**(Design Standard: Maintain "Orchids" Premium Aesthetic)**
+
+### [Payments & Booking]
+#### [NEW] [paymentController.js](file:///d:/projects/shubkar/backend/controllers/paymentController.js)
+- Mock payment processing (simulate success/failure).
+- Generate invoice ID.
+
+#### [MODIFY] [Booking.js](file:///d:/projects/shubkar/backend/models/Booking.js)
+- Add `paymentStatus` (Pending, Paid, Failed) and `transactionId`.
+
+#### [MODIFY] [VendorDashboard.jsx](file:///d:/projects/shubkar/frontend/src/pages/VendorDashboard.jsx)
+- Show revenue stats.
+- Mark bookings as "Paid" after mock payment.
+
+### [Deployment Prep]
+- Ensure all environment variables are ready for production.
+- Final code cleanup.
+
+## Verification Plan
+- **Payment Flow**:
+    - Book a vendor as Customer.
+    - Click "Pay Now" (Mock).
+    - Verify Revenue updates in Vendor Dashboard.
+

@@ -1,0 +1,61 @@
+# SHUBAKAR - Project Tasks
+
+- [ ] **Project Setup & Architecture**
+    - [ ] Initialize project structure (frontend, backend, ai)
+    - [ ] Create `README.md` with project overview
+    - [ ] Setup `task.md` and `implementation_plan.md`
+
+- [ ] **Backend Development (Node.js)**
+    - [ ] **Setup**
+        - [ ] Initialize Express server
+        - [ ] Setup Database connection (MongoDB)
+        - [ ] Configure Environment variables
+        - [ ] Implement Error handling middleware
+    - [ ] **Authentication & Authorization**
+        - [ ] Implement User Models (Customer, Vendor, Admin)
+        - [ ] Implement JWT Strategy
+        - [ ] Implement Auth Routes (Register, Login, Me)
+        - [ ] Middleware for Role-based access
+    - [ ] **Vendor Management**
+        - [ ] Vendor Profile Model & Routes
+        - [ ] Admin Approval Workflow endpoints
+    - [ ] **Event & Booking Management**
+        - [ ] Event/Booking Models
+        - [ ] Booking Routes (Create, Accept, Reject, List)
+    - [ ] **Real-time Features (Socket.IO)**
+        - [ ] Setup Socket.IO server
+        - [ ] Implement Chat events
+        - [ ] Implement Notification events
+
+- [ ] **AI Budget Assistant (Python)**
+    - [ ] Setup Python environment & dependencies
+    - [ ] Implement NLP / Parsing logic
+    - [ ] Implement Regression/Budget Logic
+    - [ ] Create Flask/FastAPI endpoints
+
+- [ ] **Frontend Development (React)**
+    - [ ] **Setup**
+        - [ ] Initialize Vite Request app
+        - [ ] Setup Tailwind CSS with SHUBAKAR Design System
+        - [ ] Configure Router (Public, Customer, Vendor, Admin routes)
+    - [ ] **Common Components**
+        - [ ] Layouts (Auth, Dashboard, Landing)
+        - [ ] UI Kit (Buttons, Inputs, Cards, Modals)
+    - [ ] **Authentication UI**
+        - [ ] Login / Register Pages
+        - [ ] Vendor Registration Step-form
+    - [ ] **Customer Features**
+        - [ ] Landing Page
+        - [ ] Vendor Discovery / Search
+        - [ ] Event Dashboard
+        - [ ] Budget Assistant UI
+    - [ ] **Vendor Features**
+        - [ ] Vendor Dashboard
+        - [ ] Booking Management UI
+    - [ ] **Admin Features**
+        - [ ] Admin Dashboard (Approvals, Analytics)
+
+- [ ] **Integration & Polish**
+    - [ ] Connect Frontend to Backend APIs
+    - [ ] Connect AI Service to Backend/Frontend
+    - [ ] Final Testing & Bug Fixes

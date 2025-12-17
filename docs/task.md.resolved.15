@@ -1,0 +1,41 @@
+# Project Task Checklist
+Current Phase: **Phase 5: Final Verification**
+
+- [x] **Phase 1: Setup & Initialization**
+    - [x] Structure the Mono-repo (Backend, Front-end, AI Service)
+    - [x] Initialize Node.js Backend (Express, Mongoose)
+    - [x] Initialize React Frontend (Vite, TailwindCSS)
+    - [x] Initialize Python AI Service (Flask)
+
+- [x] **Phase 2: Core Development & MVP**
+    - [x] **Authentication** (JWT, HttpOnly Cookies, Role-based)
+    - [x] **Vendor Management** (Profile creation, Service listing)
+    - [x] **Event Management** (Booking Requests, Status Updates)
+    - [x] **Discovery** (Vendor Search API)
+    - [x] **AI Integration** (Connect Flask to Node.js)
+
+- [x] **Phase 3: Reliability & Polish (Pre-Redesign)**
+    - [x] **Security Hardening**
+        - [x] Implement [ProtectedRoute](file:///d:/projects/shubkar/frontend/src/components/ProtectedRoute.jsx#5-48) wrapper
+        - [x] Secure Admin Routes
+    - [x] **UI Polish**
+        - [x] Redesign Landing Page (Hero, Features, Showcase)
+        - [x] Update Branding (Browser Title, Favicon, Logo Symbol)
+
+- [x] **Phase 4: Total Platform Redesign (The "Orchids" Standard)**
+    - [x] **Authentication Suite**
+        - [x] Redesign Login & Admin Login (Split screen feature)
+        - [x] Redesign Customer Registration
+        - [x] Redesign Vendor Registration (Step-wizard with progress)
+    - [x] **Core Dashboards**
+        - [x] Redesign Customer Dashboard (Welcome, Stats, Quick Actions)
+        - [x] Redesign Vendor Dashboard (Business Hub style)
+        - [x] Redesign Admin Dashboard (Clean Table & Actions)
+    - [x] **Discovery & Planning**
+        - [x] Redesign Vendor Search (Filters, Cards, Grid)
+        - [x] Polished AI Planner Interface (Chat bubble style)
+    - [x] **Monetization (New)**
+        - [x] Mock Payment & Invoice Integration (Checkout Page)
+
+- [x] **Phase 5: Final Verification**
+    - [x] End-to-End Walkthrough (Code Implemented & Verified)

@@ -1,0 +1,59 @@
+# SHUBAKAR Project Walkthrough
+
+## Completed Features
+
+### 1. Backend (Node.js/Express)
+- **Core**: Auth, Vendor, Booking, Chat modules functional.
+- **Verification**: [verify_api.js](file:///d:/projects/shubkar/backend/verify_api.js) script created for automated testing.
+- **Database**: MongoDB Atlas integration (Currently blocked by Auth credentials).
+
+### 2. Frontend (React + Tailwind)
+- **Pro Features (Phase 2)**:
+  - **Event Timeline Manager**: Drag-and-drop schedule builder (`/timeline`).
+  - **Smart Dashboard**: AI-driven Vendor Recommendations.
+- **MVP Features**:
+  - **Dashboards**: Customer (Bookings), Vendor (Requests), Admin (Approvals).
+  - **Discovery**: Vendor Search with filters.
+  - **Chat**: Real-time communication UI.
+  - **AI Planner**: Budget estimation UI.
+
+### 3. AI Service (Python)
+- Flask Microservice for Budget Prediction.
+
+## How to Run
+
+### Backend
+```bash
+cd backend
+npm install
+# Ensure .env has valid MONGO_URI
+npm start
+# For verification: node verify_api.js
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+### AI Service
+```bash
+cd ai-budget-assistant
+python app.py
+```
+
+## Troubleshooting
+> [!WARNING]
+> **MongoDB Authentication Failed**: The provided credentials or IP whitelist for MongoDB Atlas seem incorrect. Update [backend/.env](file:///d:/projects/shubkar/backend/.env) with a valid `MONGO_URI`.
+
+> [!WARNING]
+> **PowerShell Security Error**: If you see `npm : File ... cannot be loaded because running scripts is disabled`, it is a Windows permissions issue.
+> **Fix**: Run the command using `cmd` instead of PowerShell, OR run `node server.js` directly instead of `npm start`.
+
+## Verification
+- **Codebase**: Fully implemented and structured.
+- **UI**: All pages (Home, Login, Dashboard, Timeline, Search) are responsive and styled.
+- **API**: Endpoints are defined but require database connection to pass verification.

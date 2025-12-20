@@ -7,22 +7,35 @@ import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
     const [bookings, setBookings] = useState([]);
+    const [timelineProgress, setTimelineProgress] = useState(0);
     const [loading, setLoading] = useState(true);
     const [activeChat, setActiveChat] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
-        const fetchBookings = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/bookings');
-                setBookings(res.data.data.bookings);
+                const [bookingsRes, timelineRes] = await Promise.all([
+                    api.get('/bookings'),
+                    api.get('/timeline')
+                ]);
+
+                setBookings(bookingsRes.data.data.bookings);
+
+                // Calculate Timeline Progress
+                const events = timelineRes.data.data.timeline;
+                const completed = events.filter(e => e.status === 'completed').length;
+                const total = events.length;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                setTimelineProgress(progress);
+
             } catch (err) {
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchBookings();
+        fetchData();
     }, []);
 
     const getStatusColor = (status) => {
@@ -102,7 +115,7 @@ const Dashboard = () => {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-teal-100 font-medium mb-1">Tasks Completed</p>
-                                    <h3 className="text-3xl font-bold">45%</h3>
+                                    <h3 className="text-3xl font-bold">{timelineProgress}%</h3>
                                 </div>
                                 <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                     <CheckCircle size={24} />
@@ -110,7 +123,7 @@ const Dashboard = () => {
                             </div>
                             <div className="mt-4">
                                 <div className="w-full bg-black/10 rounded-full h-1.5 mb-2">
-                                    <div className="bg-white h-1.5 rounded-full" style={{ width: '45%' }}></div>
+                                    <div className="bg-white h-1.5 rounded-full" style={{ width: `${timelineProgress}%` }}></div>
                                 </div>
                                 <Link to="/timeline" className="text-sm font-semibold hover:underline flex items-center">
                                     Continue Planning <span className="ml-1">→</span>

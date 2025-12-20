@@ -207,7 +207,7 @@ const Timeline = () => {
                     {/* Timeline Display */}
                     <div className="lg:col-span-8">
                         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 min-h-[600px] relative">
-                            <div className="absolute left-10 top-8 bottom-8 w-0.5 bg-gray-100 border-l border-dashed border-gray-300"></div>
+                            <div className="absolute left-10 top-8 bottom-8 w-0.5 bg-gray-200"></div>
 
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center h-96 text-gray-400">
@@ -234,7 +234,7 @@ const Timeline = () => {
                                         <div key={event._id} className="relative pl-12 group">
                                             {/* Time Marker */}
                                             <div
-                                                className={`absolute left-[1px] top-6 -translate-x-1/2 h-4 w-4 rounded-full border-2 transition-colors z-10 ${event.status === 'completed' ? 'bg-green-500 border-green-500' : 'bg-white border-brand-primary'}`}
+                                                className={`absolute left-2 top-6 -translate-x-1/2 h-4 w-4 rounded-full border-2 transition-colors z-10 ${event.status === 'completed' ? 'bg-green-500 border-green-500' : 'bg-white border-brand-primary'}`}
                                             ></div>
 
                                             <div className={`p-5 rounded-xl border transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg ${event.status === 'completed' ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-100 shadow-sm'}`}>

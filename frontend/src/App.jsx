@@ -29,7 +29,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/vendors" element={<VendorSearch />} />
           <Route path="/ai-planner" element={<AIPlanEvent />} />
-          <Route path="/timeline" element={<Timeline />} />
+          <Route path="/timline" element={<Timeline />} />
           <Route path="/checkout" element={<Checkout />} /> {/* Checkout Route */}
         </Route>
 

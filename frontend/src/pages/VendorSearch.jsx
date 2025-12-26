@@ -3,11 +3,13 @@ import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { Search, MapPin, Filter, Star, Heart, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import BookingModal from '../components/BookingModal';
 
 const VendorSearch = () => {
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedVendor, setSelectedVendor] = useState(null);
     const [filters, setFilters] = useState({
         serviceType: 'All',
         priceRange: 'All',
@@ -46,6 +48,13 @@ const VendorSearch = () => {
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
             <Navbar />
+
+            {/* Booking Modal */}
+            <BookingModal
+                isOpen={!!selectedVendor}
+                onClose={() => setSelectedVendor(null)}
+                vendor={selectedVendor}
+            />
 
             {/* Search Header */}
             <div className="bg-white pt-28 pb-8 border-b border-gray-100 sticky top-0 z-30 shadow-sm">

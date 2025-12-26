@@ -17,22 +17,22 @@ const BookingModal = ({ isOpen, onClose, vendor }) => {
         e.preventDefault();
         setSubmitting(true);
         try {
+            // Parse price: Remove commas and non-numeric characters, fallback to 0
+            const rawPrice = vendor.priceRange ? String(vendor.priceRange).replace(/[^0-9]/g, '') : '15000';
+            const parsedPrice = parseInt(rawPrice, 10) || 0;
+
             await api.post('/bookings', {
-                vendorId: vendor.vendorProfileId || vendor._id, // Handle if vendor object structure varies (user vs profile)
-                // Actually vendor object passed from search is the profile directly or user populated?
-                // From VendorSearch logic: res.data.data.vendors. It seems to be the VendorProfile documents.
-                // Let's verify VendorSearch fetch logic. It fetches /vendors/search which returns VendorProfiles.
-                // So vendor._id is the Profile ID.
-                vendorId: vendor._id,
+                vendorId: vendor.vendorProfileId || vendor._id,
                 serviceType: formData.serviceType,
                 date: formData.date,
-                price: vendor.priceRange || 15000, // Fallback or use logic
+                price: parsedPrice,
                 notes: formData.notes
             });
             setStep(2);
         } catch (err) {
             console.error(err);
-            alert('Failed to send booking request. Please try again.');
+            const msg = err.response?.data?.message || 'Failed to send booking request. Please try again.';
+            alert(msg);
         } finally {
             setSubmitting(false);
         }

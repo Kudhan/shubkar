@@ -21,6 +21,8 @@ exports.createBooking = async (req, res) => {
             data: { booking: newBooking }
         });
     } catch (err) {
+        console.error('Booking Creation Error:', err); // Debug Log
+        console.log('Request Body:', req.body); // Debug Log
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };

@@ -14,15 +14,20 @@ import Timeline from './pages/Timeline';
 import Checkout from './pages/Checkout'; // Import Checkout
 import ProtectedRoute from './components/ProtectedRoute';
 
+import PublicRoute from './components/PublicRoute';
+
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/vendor/register" element={<VendorRegister />} />
+        {/* Public Routes (Redirect if logged in) */}
+        <Route element={<PublicRoute />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/vendor/register" element={<VendorRegister />} />
+        </Route>
 
         {/* Protected Routes for Customer */}
         <Route element={<ProtectedRoute allowedRoles={['customer', 'admin', 'superadmin']} />}>

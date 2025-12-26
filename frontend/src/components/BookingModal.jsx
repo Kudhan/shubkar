@@ -7,9 +7,19 @@ const BookingModal = ({ isOpen, onClose, vendor }) => {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         date: '',
-        serviceType: vendor?.services?.[0] || '',
+        serviceType: '',
         notes: ''
     });
+
+    React.useEffect(() => {
+        if (vendor) {
+            setFormData(prev => ({
+                ...prev,
+                serviceType: vendor.services?.[0] || 'General',
+                price: vendor.priceRange?.min || 15000 // Pre-calculate if needed, mainly for UI if we used it
+            }));
+        }
+    }, [vendor]);
 
     if (!isOpen || !vendor) return null;
 
@@ -17,15 +27,21 @@ const BookingModal = ({ isOpen, onClose, vendor }) => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            // Parse price: Remove commas and non-numeric characters, fallback to 0
-            const rawPrice = vendor.priceRange ? String(vendor.priceRange).replace(/[^0-9]/g, '') : '15000';
-            const parsedPrice = parseInt(rawPrice, 10) || 0;
+            // Parse price logic: Handle object {min, max} vs string/number vs undefined
+            let priceValue = 15000; // Default fallback
+            if (vendor.priceRange) {
+                if (typeof vendor.priceRange === 'object') {
+                    priceValue = vendor.priceRange.min || 15000;
+                } else {
+                    priceValue = parseInt(String(vendor.priceRange).replace(/[^0-9]/g, ''), 10) || 15000;
+                }
+            }
 
             await api.post('/bookings', {
                 vendorId: vendor.vendorProfileId || vendor._id,
                 serviceType: formData.serviceType,
                 date: formData.date,
-                price: parsedPrice,
+                price: Number(priceValue),
                 notes: formData.notes
             });
             setStep(2);

@@ -16,7 +16,7 @@ const VendorSearch = () => {
         location: ''
     });
 
-    useEffect(() => {
+    useEfect(() => {
         fetchVendors();
     }, []);
 

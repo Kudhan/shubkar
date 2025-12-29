@@ -68,12 +68,25 @@ exports.updateBookingStatus = async (req, res) => {
 exports.getBookings = async (req, res) => {
     try {
         let query = {};
-        if (req.user.role === 'customer') {
+
+        // 1. Admin/Super Admin
+        if (req.user.role === 'admin' || req.user.role === 'super-admin') {
+            // Admin can see everything, or filter by specific vendor if provided in query
+            if (req.query.vendorId) {
+                // If vendorId is in query, check if it's a valid ID or we need to find profile for a user ID? 
+                // Let's assume frontend passes VendorProfile ID since that's what we usually list.
+                query.vendor = req.query.vendorId;
+            }
+            // else show all
+        }
+        // 2. Customer
+        else if (req.user.role === 'customer') {
             query.customer = req.user.id;
-        } else if (req.user.role === 'vendor') {
+        }
+        // 3. Vendor
+        else if (req.user.role === 'vendor') {
             // Find bookings where vendor matches user's profile
-            const user = await req.user.populate('vendorProfile'); // Assuming we can populate or just look up
-            // If User model has vendorProfile ID
+            const user = await req.user.populate('vendorProfile');
             if (req.user.vendorProfile) {
                 query.vendor = req.user.vendorProfile;
             } else {

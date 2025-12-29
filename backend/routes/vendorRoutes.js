@@ -17,4 +17,9 @@ router.get('/profile', authMiddleware.restrictTo('vendor'), vendorController.get
 router.get('/all', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.getAllVendors);
 router.patch('/approve/:vendorId', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.approveVendor);
 
+router.get('/:id', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.getVendorById);
+router.patch('/:id', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.updateVendorByAdmin);
+router.delete('/:id', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.deleteVendor);
+
+
 module.exports = router;

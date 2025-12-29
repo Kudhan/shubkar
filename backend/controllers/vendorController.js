@@ -113,3 +113,67 @@ exports.approveVendor = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 }
+
+// Admin: Get Single Vendor
+exports.getVendorById = async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findById(req.params.id).populate('user', 'name email vendorStatus role');
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+        res.status(200).json({
+            status: 'success',
+            data: { vendor }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Admin: Update Vendor
+exports.updateVendorByAdmin = async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { vendor }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Admin: Delete Vendor
+exports.deleteVendor = async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findById(req.params.id);
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+
+        // 1. Reset User Role and Status
+        await User.findByIdAndUpdate(vendor.user, {
+            role: 'customer',
+            vendorStatus: 'not-vendor',
+            $unset: { vendorProfile: 1 }
+        });
+
+        // 2. Delete Profile
+        await VendorProfile.findByIdAndDelete(req.params.id);
+
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};

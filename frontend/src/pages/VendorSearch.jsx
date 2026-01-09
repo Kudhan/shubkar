@@ -188,7 +188,7 @@ const VendorSearch = () => {
                                             <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-xs text-gray-400 font-semibold uppercase">Starting from</p>
-                                                    <p className="font-bold text-gray-900">₹{vendor.priceRange || '15,000'}</p>
+                                                    <p className="font-bold text-gray-900">₹{typeof vendor.priceRange === 'object' ? vendor.priceRange.min?.toLocaleString() : vendor.priceRange || '15,000'}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => setSelectedVendor(vendor)}

@@ -90,7 +90,7 @@ const Navbar = () => {
             <>
                 <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
                 <NavLink to="/timeline" icon={Calendar}>Timeline</NavLink>
-                <NavLink to="/vendors" icon={Search}>Vendors</NavLink>
+                <NavLink to="/venors" icon={Search}>Vendors</NavLink>
                 <NavLink to="/ai-planner" icon={LayoutDashboard}>AI Planner</NavLink>
 
                 <div className="flex items-center space-x-4 pl-4 border-l border-gray-200">

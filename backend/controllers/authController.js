@@ -140,3 +140,57 @@ exports.protect = async (req, res, next) => {
         return res.status(401).json({ status: 'fail', message: 'Invalid token or session expired' });
     }
 };
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const { name } = req.body;
+
+        // 1) Update user document
+        const updatedUser = await User.findByIdAndUpdate(req.user.id, { name }, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user: updatedUser
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+};
+
+exports.updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // 1) Get user from collection
+        const user = await User.findById(req.user.id).select('+password');
+
+        // 2) Check if POSTed current password is correct
+        if (!(await user.correctPassword(currentPassword, user.password))) {
+            return res.status(401).json({
+                status: 'fail',
+                message: 'Your current password is wrong'
+            });
+        }
+
+        // 3) Update password
+        user.password = newPassword;
+        await user.save(); // User.save() runs pre-save hooks (hashing) // IMPORTANT: .save() is required for pre-save hook
+
+        // 4) Log user in, send JWT (updating password usually invalidates old tokens in some stateless architectures, but here we just re-issue)
+        createSendToken(user, 200, res);
+
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+};

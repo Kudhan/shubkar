@@ -12,6 +12,7 @@ router.use(authMiddleware.protect);
 
 router.post('/profile', authMiddleware.restrictTo('vendor'), vendorController.createProfile);
 router.get('/profile', authMiddleware.restrictTo('vendor'), vendorController.getProfile);
+router.patch('/profile', authMiddleware.restrictTo('vendor'), vendorController.updateMyProfile);
 
 // Admin Routes
 router.get('/all', authMiddleware.restrictTo('admin', 'super-admin'), vendorController.getAllVendors);

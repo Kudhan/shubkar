@@ -47,6 +47,34 @@ exports.getProfile = async (req, res) => {
     }
 };
 
+exports.updateMyProfile = async (req, res) => {
+    try {
+        // Prevent updating user field or approval status directly here
+        if (req.body.user || req.body.isApproved || req.body.rating) {
+            delete req.body.user;
+            delete req.body.isApproved;
+            delete req.body.rating;
+        }
+
+        const profile = await VendorProfile.findOneAndUpdate(
+            { user: req.user.id },
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!profile) {
+            return res.status(404).json({ status: 'fail', message: 'Profile not found' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { profile }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
 // Admin only
 exports.getAllVendors = async (req, res) => {
     try {

@@ -12,6 +12,7 @@ import AIPlanEvent from './pages/AIPlanEvent';
 import AdminDashboard from './pages/AdminDashboard';
 import Timeline from './pages/Timeline';
 import Checkout from './pages/Checkout'; // Import Checkout
+import CustomerProfile from './pages/CustomerProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import PublicRoute from './components/PublicRoute';
@@ -32,6 +33,7 @@ function App() {
         {/* Protected Routes for Customer */}
         <Route element={<ProtectedRoute allowedRoles={['customer', 'admin', 'superadmin']} />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<CustomerProfile />} />
           <Route path="/vendors" element={<VendorSearch />} />
           <Route path="/ai-planner" element={<AIPlanEvent />} />
           <Route path="/timeline" element={<Timeline />} />

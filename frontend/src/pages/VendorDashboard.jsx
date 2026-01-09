@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
+import VendorProfileSettings from '../components/VendorProfileSettings';
 import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings } from 'lucide-react';
 
 const VendorDashboard = () => {
@@ -115,6 +116,7 @@ const VendorDashboard = () => {
                 {/* Content Area */}
                 {activeTab === 'bookings' ? (
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                        {/* ... Table Content ... (using strict existing structure) */}
                         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
                             <h2 className="text-lg font-bold text-gray-900">Recent Requests</h2>
                             <div className="flex space-x-2 text-sm">
@@ -197,11 +199,7 @@ const VendorDashboard = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
-                        <Settings size={48} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Profile Settings</h3>
-                        <p className="text-gray-500">Profile management coming soon.</p>
-                    </div>
+                    <VendorProfileSettings />
                 )}
             </div>
         </div>

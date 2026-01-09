@@ -94,7 +94,10 @@ const Navbar = () => {
                 <NavLink to="/ai-planner" icon={LayoutDashboard}>AI Planner</NavLink>
 
                 <div className="flex items-center space-x-4 pl-4 border-l border-gray-200">
-                    <span className="text-sm font-medium text-gray-600 hidden md:block">{user.name}</span>
+                    <Link to="/profile" className="flex items-center text-sm font-medium text-gray-600 hover:text-brand-primary transition-colors">
+                        <User size={18} className="mr-1" />
+                        <span className="hidden md:block">{user.name}</span>
+                    </Link>
                     <button onClick={handleLogout} className="text-gray-500 hover:text-red-600 transition-colors" title="Logout">
                         <LogOut size={20} />
                     </button>

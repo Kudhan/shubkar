@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, Loader } from 'lucide-react';
 
 const Login = () => {
+    const { login } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,8 +19,9 @@ const Login = () => {
         try {
             const res = await api.post('/auth/login', formData);
             const user = res.data.data.user;
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(user));
+
+            // Use context login
+            login(user, res.data.token);
 
             if (user.role === 'admin' || user.role === 'superadmin') {
                 navigate('/admin');

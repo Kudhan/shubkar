@@ -62,6 +62,9 @@ const Dashboard = () => {
                             <p className="text-gray-500 mt-1">Here's what's happening with your event planning.</p>
                         </div>
                         <div className="flex gap-3">
+                            <Link to="/events" className="flex items-center px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                                <Calendar size={18} className="mr-2" /> My Events
+                            </Link>
                             <Link to="/vendors" className="flex items-center px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
                                 <Search size={18} className="mr-2" /> Find Vendor
                             </Link>
@@ -284,14 +287,16 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {activeChat && (
-                <ChatWindow
-                    bookingId={activeChat}
-                    currentUser={user}
-                    onClose={() => setActiveChat(null)}
-                />
-            )}
-        </div>
+            {
+                activeChat && (
+                    <ChatWindow
+                        bookingId={activeChat}
+                        currentUser={user}
+                        onClose={() => setActiveChat(null)}
+                    />
+                )
+            }
+        </div >
     );
 };
 

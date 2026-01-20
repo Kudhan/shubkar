@@ -7,20 +7,9 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
-    const [vendors, setVendors] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchText, setSearchText] = useState('');
-
-    // Modal States
-    const [selectedVendor, setSelectedVendor] = useState(null);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showActivityModal, setShowActivityModal] = useState(false);
-    const [vendorBookings, setVendorBookings] = useState([]);
-    const [loadingBookings, setLoadingBookings] = useState(false);
-
-    // Edit Form State
-    const [editFormData, setEditFormData] = useState({});
+    const [services, setServices] = useState([]);
+    const [loadingServices, setLoadingServices] = useState(false);
+    const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'services'
 
     const fetchVendors = async () => {
         try {
@@ -34,8 +23,21 @@ const AdminDashboard = () => {
         }
     };
 
+    const fetchServices = async () => {
+        try {
+            setLoadingServices(true);
+            const res = await api.get('/services/admin/all');
+            setServices(res.data.data.services);
+        } catch (err) {
+            console.error('Failed to fetch services:', err);
+        } finally {
+            setLoadingServices(false);
+        }
+    };
+
     useEffect(() => {
         fetchVendors();
+        fetchServices();
     }, []);
 
     const handleApproval = async (vendorId, status) => {
@@ -44,6 +46,17 @@ const AdminDashboard = () => {
             fetchVendors();
         } catch (err) {
             console.error('Error updating status', err);
+        }
+    };
+
+    const handleServiceModeration = async (serviceId, status) => {
+        if (status === 'rejected' && !confirm("Reject this service?")) return;
+        try {
+            await api.patch(`/services/${serviceId}/moderate`, { status });
+            fetchServices();
+        } catch (err) {
+            console.error('Error moderating service', err);
+            alert('Failed to update service');
         }
     };
 
@@ -109,6 +122,11 @@ const AdminDashboard = () => {
         v.user?.email.toLowerCase().includes(searchText.toLowerCase())
     );
 
+    const filteredServices = services.filter(s =>
+        s.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        s.vendor?.name?.toLowerCase().includes(searchText.toLowerCase())
+    );
+
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
             <Navbar />
@@ -123,15 +141,32 @@ const AdminDashboard = () => {
                         </h1>
                         <p className="text-gray-500 mt-1">Complete control over vendor ecosystem.</p>
                     </div>
-                    <div className="relative w-full md:w-auto">
-                        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search vendors..."
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 w-full md:w-64"
-                        />
+
+                    <div className="flex gap-4 items-center w-full md:w-auto">
+                        {/* Tabs */}
+                        <div className="flex bg-white rounded-xl p-1 shadow-sm border border-gray-200">
+                            <button
+                                onClick={() => setActiveTab('vendors')}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'vendors' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                                Vendors
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('services')}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'services' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                                Services
+                            </button>
+                        </div>
+
+                        <div className="relative flex-1 md:w-64">
+                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder={`Search ${activeTab}...`}
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 w-full"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -146,109 +181,176 @@ const AdminDashboard = () => {
                         <h3 className="text-3xl font-bold text-amber-600">{vendors.filter(v => !v.isApproved).length}</h3>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <p className="text-gray-500 text-sm font-medium">Active High Performers</p>
-                        <h3 className="text-3xl font-bold text-emerald-600 font-secondary">
-                            {vendors.filter(v => v.rating?.average > 4.5).length}
+                        <p className="text-gray-500 text-sm font-medium">Pending Services</p>
+                        <h3 className="text-3xl font-bold text-blue-600 font-secondary">
+                            {services.filter(s => s.lifecycleStatus === 'submitted').length}
                         </h3>
                     </div>
                 </div>
 
-                {/* Vendor Table */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                                <tr>
-                                    <th className="p-5">Company Info</th>
-                                    <th className="p-5">Service</th>
-                                    <th className="p-5">Status</th>
-                                    <th className="p-5 text-right">Controls</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {loading ? (
-                                    <tr><td colSpan="4" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading data...</td></tr>
-                                ) : filteredVendors.length === 0 ? (
-                                    <tr><td colSpan="4" className="p-10 text-center text-gray-500">No vendors found.</td></tr>
-                                ) : (
-                                    filteredVendors.map((vendor) => (
-                                        <tr key={vendor._id} className="hover:bg-gray-50/80 transition-colors group">
-                                            <td className="p-5">
-                                                <div className="flex items-center">
-                                                    <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold mr-3 shrink-0">
-                                                        {vendor.companyName?.charAt(0) || "V"}
+                {/* Main Content */}
+                {activeTab === 'vendors' ? (
+                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                                    <tr>
+                                        <th className="p-5">Company Info</th>
+                                        <th className="p-5">Service</th>
+                                        <th className="p-5">Status</th>
+                                        <th className="p-5 text-right">Controls</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {loading ? (
+                                        <tr><td colSpan="4" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading data...</td></tr>
+                                    ) : filteredVendors.length === 0 ? (
+                                        <tr><td colSpan="4" className="p-10 text-center text-gray-500">No vendors found.</td></tr>
+                                    ) : (
+                                        filteredVendors.map((vendor) => (
+                                            <tr key={vendor._id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="p-5">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold mr-3 shrink-0">
+                                                            {vendor.companyName?.charAt(0) || "V"}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{vendor.companyName}</p>
+                                                            <p className="text-xs text-gray-500">{vendor.user?.email}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{vendor.companyName}</p>
-                                                        <p className="text-xs text-gray-500">{vendor.user?.email}</p>
+                                                </td>
+                                                <td className="p-5">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {vendor.services.slice(0, 2).map((s, i) => (
+                                                            <span key={i} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold border border-gray-200">
+                                                                {s}
+                                                            </span>
+                                                        ))}
+                                                        {vendor.services.length > 2 && <span className="text-xs text-gray-400">+{vendor.services.length - 2}</span>}
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-5">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {vendor.services.slice(0, 2).map((s, i) => (
-                                                        <span key={i} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold border border-gray-200">
-                                                            {s}
+                                                </td>
+                                                <td className="p-5">
+                                                    {vendor.isApproved ? (
+                                                        <span className="flex items-center text-emerald-700 text-sm font-bold bg-emerald-50 px-3 py-1 rounded-full w-fit">
+                                                            <CheckCircle size={14} className="mr-1" /> Approved
                                                         </span>
-                                                    ))}
-                                                    {vendor.services.length > 2 && <span className="text-xs text-gray-400">+{vendor.services.length - 2}</span>}
-                                                </div>
-                                            </td>
-                                            <td className="p-5">
-                                                {vendor.isApproved ? (
-                                                    <span className="flex items-center text-emerald-700 text-sm font-bold bg-emerald-50 px-3 py-1 rounded-full w-fit">
-                                                        <CheckCircle size={14} className="mr-1" /> Approved
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center text-amber-700 text-sm font-bold bg-amber-50 px-3 py-1 rounded-full w-fit">
-                                                        <Loader size={14} className="mr-1 animate-spin" /> Pending
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-5 text-right">
-                                                <div className="flex justify-end items-center space-x-2">
-                                                    {/* Approval Actions */}
-                                                    {!vendor.isApproved && (
-                                                        <>
-                                                            <button onClick={() => handleApproval(vendor._id, 'approved')} className="p-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg transition-colors" title="Approve">
-                                                                <CheckCircle size={16} />
-                                                            </button>
-                                                            <button onClick={() => handleApproval(vendor._id, 'rejected')} className="p-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg transition-colors" title="Reject">
-                                                                <XCircle size={16} />
-                                                            </button>
-                                                            <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                                                        </>
+                                                    ) : (
+                                                        <span className="flex items-center text-amber-700 text-sm font-bold bg-amber-50 px-3 py-1 rounded-full w-fit">
+                                                            <Loader size={14} className="mr-1 animate-spin" /> Pending
+                                                        </span>
                                                     )}
+                                                </td>
+                                                <td className="p-5 text-right">
+                                                    <div className="flex justify-end items-center space-x-2">
+                                                        {/* Approval Actions */}
+                                                        {!vendor.isApproved && (
+                                                            <>
+                                                                <button onClick={() => handleApproval(vendor._id, 'approved')} className="p-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg transition-colors" title="Approve">
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                                <button onClick={() => handleApproval(vendor._id, 'rejected')} className="p-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg transition-colors" title="Reject">
+                                                                    <XCircle size={16} />
+                                                                </button>
+                                                                <div className="h-4 w-px bg-gray-300 mx-2"></div>
+                                                            </>
+                                                        )}
 
-                                                    {/* View Details */}
-                                                    <button onClick={() => { setSelectedVendor(vendor); setShowDetailsModal(true); }} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="View Details">
-                                                        <Eye size={18} />
-                                                    </button>
+                                                        {/* View Details */}
+                                                        <button onClick={() => { setSelectedVendor(vendor); setShowDetailsModal(true); }} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="View Details">
+                                                            <Eye size={18} />
+                                                        </button>
 
-                                                    {/* Activities */}
-                                                    <button onClick={() => handleActivityClick(vendor)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors" title="View Activity">
-                                                        <Activity size={18} />
-                                                    </button>
+                                                        {/* Activities */}
+                                                        <button onClick={() => handleActivityClick(vendor)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors" title="View Activity">
+                                                            <Activity size={18} />
+                                                        </button>
 
-                                                    {/* Edit */}
-                                                    <button onClick={() => handleEditClick(vendor)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                                                        <FileText size={18} />
-                                                    </button>
+                                                        {/* Edit */}
+                                                        <button onClick={() => handleEditClick(vendor)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                                                            <FileText size={18} />
+                                                        </button>
 
-                                                    {/* Delete */}
-                                                    <button onClick={() => handleDelete(vendor._id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                                        {/* Delete */}
+                                                        <button onClick={() => handleDelete(vendor._id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                                    <tr>
+                                        <th className="p-5">Service Info</th>
+                                        <th className="p-5">Vendor</th>
+                                        <th className="p-5">Price</th>
+                                        <th className="p-5">Status</th>
+                                        <th className="p-5 text-right">Moderation</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {loadingServices ? (
+                                        <tr><td colSpan="5" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading services...</td></tr>
+                                    ) : filteredServices.length === 0 ? (
+                                        <tr><td colSpan="5" className="p-10 text-center text-gray-500">No services found.</td></tr>
+                                    ) : (
+                                        filteredServices.map((service) => (
+                                            <tr key={service._id} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="p-5">
+                                                    <p className="font-bold text-gray-900">{service.title}</p>
+                                                    <p className="text-xs text-gray-500 truncate max-w-xs">{service.description}</p>
+                                                </td>
+                                                <td className="p-5">
+                                                    <p className="text-sm font-medium">{service.vendor?.companyName || service.vendor?.name}</p>
+                                                </td>
+                                                <td className="p-5 border-t border-gray-100 font-medium">
+                                                    ₹{service.basePrice} <span className="text-xs text-gray-400">/{service.priceUnit}</span>
+                                                </td>
+                                                <td className="p-5">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase
+                                                        ${service.lifecycleStatus === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                                                            service.lifecycleStatus === 'submitted' ? 'bg-blue-100 text-blue-700' :
+                                                                service.lifecycleStatus === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                        {service.lifecycleStatus}
+                                                    </span>
+                                                </td>
+                                                <td className="p-5 text-right">
+                                                    {service.lifecycleStatus === 'submitted' && (
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => handleServiceModeration(service._id, 'approved')}
+                                                                className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700"
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleServiceModeration(service._id, 'rejected')}
+                                                                className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200"
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
+
 
             {/* DETAILS MODAL */}
             {showDetailsModal && selectedVendor && (

@@ -1,14 +1,11 @@
 const Booking = require('../models/Booking');
 
+const Transaction = require('../models/Transaction');
+
+// Mock Payment Gateway processing
 exports.processPayment = async (req, res) => {
     try {
         const { bookingId, amount, paymentMethod } = req.body;
-
-        const booking = await Booking.findById(bookingId);
-        if (!booking) {
-            return res.status(404).json({ status: 'fail', message: 'Booking not found' });
-        }
-
         // Simulate Processing Delay
         await new Promise(resolve => setTimeout(resolve, 1500));
 

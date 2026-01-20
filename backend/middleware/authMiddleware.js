@@ -26,6 +26,11 @@ exports.protect = async (req, res, next) => {
             return res.status(401).json({ status: 'fail', message: 'The user belonging to this token no longer does exist.' });
         }
 
+        // 4) Check if user is active
+        if (currentUser.status === 'suspended' || currentUser.status === 'deleted') {
+            return res.status(403).json({ status: 'fail', message: 'Your account has been suspended or deleted. Please contact support.' });
+        }
+
         // GRANT ACCESS TO PROTECTED ROUTE
         req.user = currentUser;
         next();

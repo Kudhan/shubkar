@@ -21,15 +21,20 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['customer', 'vendor', 'admin', 'super-admin'],
+        enum: ['customer', 'vendor', 'admin', 'superadmin'],
         default: 'customer',
+    },
+    status: {
+        type: String,
+        enum: ['active', 'suspended', 'deleted'],
+        default: 'active',
     },
     // Vendor specific fields
     vendorStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected', 'not-vendor'],
+        enum: ['applied', 'verified', 'approved', 'active', 'suspended', 'not-vendor'],
         default: function () {
-            return this.role === 'vendor' ? 'pending' : 'not-vendor';
+            return this.role === 'vendor' ? 'applied' : 'not-vendor';
         }
     },
     vendorProfile: {
@@ -39,6 +44,9 @@ const userSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
+    },
+    lastLogin: {
+        type: Date
     }
 });
 

@@ -1,35 +1,55 @@
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
-    user: {
+    customer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: [true, 'Event must belong to a customer']
     },
-    name: {
-        type: String, // e.g., "Rahul's Wedding"
-        required: [true, 'Event name is required']
-    },
-    type: {
+    title: {
         type: String,
-        enum: ['Wedding', 'Birthday', 'Corporate', 'Engagement', 'Other'],
-        required: true
+        required: [true, 'Please provide an event name'], // e.g., "Rahul's Wedding"
+        trim: true
+    },
+    eventType: {
+        type: String,
+        enum: ['Wedding', 'Birthday', 'Corporate', 'Anniversary', 'Other'],
+        default: 'Other'
     },
     date: {
         type: Date,
-        required: true
+        required: [true, 'Event must have a date']
     },
     guestCount: Number,
-    location: String,
     budget: {
         total: Number,
-        spent: { type: Number, default: 0 }
+        currency: {
+            type: String,
+            default: 'INR'
+        }
+    },
+    location: {
+        city: String,
+        venue: String
     },
     status: {
         type: String,
-        enum: ['planning', 'active', 'completed', 'cancelled'],
+        enum: ['planning', 'confirmed', 'completed', 'cancelled'],
         default: 'planning'
     },
+    bookings: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking'
+    }],
+    tasks: [{
+        title: String,
+        status: {
+            type: String,
+            enum: ['pending', 'in-progress', 'done'],
+            default: 'pending'
+        },
+        dueDate: Date
+    }],
     createdAt: {
         type: Date,
         default: Date.now

@@ -17,6 +17,7 @@ router.patch('/:id', authMiddleware.restrictTo('vendor'), serviceController.upda
 router.put('/:id/publish', authMiddleware.restrictTo('vendor'), serviceController.publishService);
 
 // Admin Routes
+router.get('/admin/all', authMiddleware.restrictTo('admin', 'superadmin'), serviceController.getAdminServices);
 router.patch('/:serviceId/moderate', authMiddleware.restrictTo('admin', 'superadmin'), serviceController.moderateService);
 
 module.exports = router;

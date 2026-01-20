@@ -26,18 +26,26 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'accepted', 'rejected', 'completed', 'cancelled'],
-        default: 'pending'
+        enum: ['inquiry', 'negotiation', 'confirmed', 'completed', 'cancelled', 'disputed', 'refunded'],
+        default: 'inquiry'
+    },
+    negotiation: {
+        currentPrice: Number,
+        history: [{
+            offeredBy: { type: String, enum: ['customer', 'vendor'] },
+            price: Number,
+            message: String,
+            timestamp: { type: Date, default: Date.now },
+            action: { type: String, enum: ['offer', 'counter', 'accept', 'reject'] }
+        }]
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'paid', 'failed'],
+        enum: ['pending', 'escrow', 'released', 'refunded', 'failed'],
         default: 'pending'
     },
-    transactionId: {
-        type: String
-    },
-    price: Number, // Agreed price
+    escrowTransactionId: String,
+    finalPrice: Number, // Agreed price after negotiation
     notes: String,
     createdAt: {
         type: Date,

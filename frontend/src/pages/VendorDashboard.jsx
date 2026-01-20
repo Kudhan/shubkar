@@ -4,6 +4,7 @@ import api from '../services/api';
 import VendorProfileSettings from '../components/VendorProfileSettings';
 import ServiceForm from '../components/ServiceForm';
 import ServiceCard from '../components/ServiceCard';
+import NegotiationModal from '../components/NegotiationModal';
 import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid } from 'lucide-react';
 
 const VendorDashboard = () => {
@@ -13,6 +14,7 @@ const VendorDashboard = () => {
     const [servicesLoading, setServicesLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('bookings');
     const [showServiceModal, setShowServiceModal] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
     const fetchBookings = async () => {
@@ -54,12 +56,14 @@ const VendorDashboard = () => {
 
     const StatusBadge = ({ status }) => {
         const styles = {
-            accepted: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-            pending: 'bg-amber-100 text-amber-700 border-amber-200',
-            rejected: 'bg-gray-100 text-gray-600 border-gray-200'
+            confirmed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            inquiry: 'bg-blue-100 text-blue-700 border-blue-200',
+            negotiation: 'bg-amber-100 text-amber-700 border-amber-200',
+            cancelled: 'bg-red-100 text-red-600 border-red-200',
+            completed: 'bg-gray-100 text-gray-600 border-gray-200'
         };
         return (
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${styles[status] || styles.rejected}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${styles[status] || styles.cancelled}`}>
                 {status}
             </span>
         );
@@ -117,20 +121,20 @@ const VendorDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     <StatCard
                         title="Total Revenue (Est)"
-                        value={`₹${bookings.filter(b => b.status === 'accepted').reduce((sum, b) => sum + (b.price || 0), 0).toLocaleString()}`}
+                        value={`₹${bookings.filter(b => b.status === 'confirmed').reduce((sum, b) => sum + (b.negotiation?.currentPrice || b.price || 0), 0).toLocaleString()}`}
                         icon={DollarSign}
                         color="bg-emerald-50 text-emerald-600"
                         trend="+12%"
                     />
                     <StatCard
                         title="Active Bookings"
-                        value={bookings.filter(b => b.status === 'accepted').length}
+                        value={bookings.filter(b => b.status === 'confirmed' || b.status === 'negotiation').length}
                         icon={Calendar}
                         color="bg-blue-50 text-blue-600"
                     />
                     <StatCard
-                        title="Pending Requests"
-                        value={bookings.filter(b => b.status === 'pending').length}
+                        title="New Inquiries"
+                        value={bookings.filter(b => b.status === 'inquiry').length}
                         icon={Clock}
                         color="bg-amber-50 text-amber-600"
                     />
@@ -144,7 +148,7 @@ const VendorDashboard = () => {
                             <h2 className="text-lg font-bold text-gray-900">Recent Requests</h2>
                             <div className="flex space-x-2 text-sm">
                                 <span className="px-3 py-1 bg-white border rounded-lg text-gray-600 font-medium shadow-sm">All ({bookings.length})</span>
-                                <span className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 font-medium">Pending ({bookings.filter(b => b.status === 'pending').length})</span>
+                                <span className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 font-medium">Pending ({bookings.filter(b => b.status === 'inquiry' || b.status === 'negotiation').length})</span>
                             </div>
                         </div>
 
@@ -183,7 +187,7 @@ const VendorDashboard = () => {
                                                         {booking.paymentStatus === 'paid' && (
                                                             <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded border border-green-200">PAID</span>
                                                         )}
-                                                        <p className="font-bold text-gray-900 mt-1">₹{booking.price?.toLocaleString()}</p>
+                                                        <p className="font-bold text-gray-900 mt-1">₹{(booking.negotiation?.currentPrice || booking.price)?.toLocaleString()}</p>
                                                     </div>
                                                 </div>
 
@@ -195,24 +199,19 @@ const VendorDashboard = () => {
 
                                                 {/* Actions Bar */}
                                                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-                                                    <button className="text-brand-purple font-semibold text-sm hover:underline flex items-center">
+                                                    <button
+                                                        onClick={() => setSelectedBooking(booking)}
+                                                        className="text-brand-purple font-semibold text-sm hover:underline flex items-center"
+                                                    >
                                                         <MessageSquare size={16} className="mr-2" /> Message Customer
                                                     </button>
 
-                                                    {booking.status === 'pending' && (
-                                                        <div className="flex space-x-3">
-                                                            <button
-                                                                onClick={() => handleAction(booking._id, 'rejected')}
-                                                                className="px-4 py-2 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors">
-                                                                Reject
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleAction(booking._id, 'accepted')}
-                                                                className="px-6 py-2 rounded-xl text-sm font-bold bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 flex items-center">
-                                                                <Check size={16} className="mr-2" /> Accept Booking
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                    <button
+                                                        onClick={() => setSelectedBooking(booking)}
+                                                        className="px-6 py-2 rounded-xl text-sm font-bold bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 flex items-center"
+                                                    >
+                                                        Manage / Negotiate
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -265,6 +264,18 @@ const VendorDashboard = () => {
                     onServiceAdded={() => {
                         fetchServices();
                         // Optional: show toast
+                    }}
+                />
+            )}
+
+            {selectedBooking && (
+                <NegotiationModal
+                    booking={selectedBooking}
+                    userRole="vendor"
+                    onClose={() => setSelectedBooking(null)}
+                    onUpdate={() => {
+                        fetchBookings();
+                        // Keep modal open or close? Plan says close.
                     }}
                 />
             )}

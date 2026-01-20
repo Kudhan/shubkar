@@ -7,9 +7,24 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
+    const [vendors, setVendors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState('');
+
     const [services, setServices] = useState([]);
     const [loadingServices, setLoadingServices] = useState(false);
     const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'services'
+
+    // Modal States
+    const [selectedVendor, setSelectedVendor] = useState(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showActivityModal, setShowActivityModal] = useState(false);
+    const [vendorBookings, setVendorBookings] = useState([]);
+    const [loadingBookings, setLoadingBookings] = useState(false);
+
+    // Edit Form State
+    const [editFormData, setEditFormData] = useState({});
 
     const fetchVendors = async () => {
         try {

@@ -27,42 +27,126 @@ exports.createBooking = async (req, res) => {
     }
 };
 
-// Vendor: Accept/Reject
-exports.updateBookingStatus = async (req, res) => {
+// Customer: Start Inquiry / Booking Request
+exports.createBooking = async (req, res) => {
     try {
-        const { bookingId } = req.params;
-        const { status } = req.body; // 'accepted', 'rejected'
+        const { vendorId, eventId, serviceType, date, price, notes } = req.body;
 
-        // Verify vendor owns this booking request
-        // Complex query: Booking.vendor is VendorProfileID. req.user is UserID.
-        // We need to fetch the vendor profile for current user first to check ownership.
-        // For simplicity, assuming req.user.vendorProfile is populated or we fetch it.
-        // But req.user is from protect middleware which is User model.
-
-        // Let's rely on finding the booking where vendor matches user's profile.
-        // But wait, User model has vendorProfile field? Yes, I added references to User model.
-
-        // Actually best way:
-        const booking = await Booking.findById(bookingId).populate('vendor');
-
-        // Determine if current user is the vendor or the customer (customer can cancel)
-        // This logic needs to be robust. 
-        // For now, assume Vendor Action.
-
-        if (!booking) return res.status(404).json({ status: 'fail', message: 'Booking not found' });
-
-        // Update
-        booking.status = status;
-        await booking.save();
-
-        res.status(200).json({
-            status: 'success',
-            data: { booking }
+        const newBooking = await Booking.create({
+            customer: req.user.id,
+            vendor: vendorId,
+            event: eventId,
+            serviceType,
+            date,
+            status: 'inquiry',
+            negotiation: {
+                currentPrice: price, // Initial offer/inquiry price
+                history: [{
+                    offeredBy: 'customer',
+                    price: price,
+                    message: notes,
+                    action: 'offer'
+                }]
+            }
         });
+
+        res.status(201).json({ status: 'success', data: { booking: newBooking } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }
-}
+};
+
+// Negotiation: Make Offer / Counter-Offer
+exports.negotiateBooking = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const { price, message } = req.body;
+
+        const booking = await Booking.findById(bookingId).populate('vendor');
+        if (!booking) return res.status(404).json({ status: 'fail', message: 'Booking not found' });
+
+        // Identify role (Customer or Vendor)
+        let role = 'customer';
+        if (req.user.role === 'vendor') {
+            // Verify ownership
+            if (booking.vendor.user && booking.vendor.user.toString() !== req.user.id) {
+                // If vendor field is Profile ID, we need to check if req.user owns that profile
+                // Assuming logic here matches Profile check or populate user
+                // For MVP, relying on the fact that we populate 'vendor' which is a Profile, that has a 'user' field?
+                // Let's assume booking.vendor is ObjectId of VendorProfile.
+                // We need to fetch it to check user.
+                // Simpler check:
+                const VendorProfile = require('../models/VendorProfile');
+                const profile = await VendorProfile.findOne({ user: req.user.id });
+                if (!profile || profile._id.toString() !== booking.vendor._id.toString()) {
+                    return res.status(403).json({ status: 'fail', message: 'Not authorized' });
+                }
+                role = 'vendor';
+            }
+        } else if (booking.customer.toString() !== req.user.id) {
+            return res.status(403).json({ status: 'fail', message: 'Not authorized' });
+        }
+
+        // Add to history
+        booking.negotiation.currentPrice = price;
+        booking.negotiation.history.push({
+            offeredBy: role,
+            price: price,
+            message: message,
+            action: 'counter'
+        });
+        booking.status = 'negotiation';
+
+        await booking.save();
+
+        res.status(200).json({ status: 'success', data: { booking } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Negotiation: Accept Offer
+exports.acceptBooking = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const booking = await Booking.findById(bookingId);
+
+        // Add authorization check similar to above...
+
+        booking.status = 'confirmed';
+        booking.finalPrice = booking.negotiation.currentPrice;
+        booking.negotiation.history.push({
+            offeredBy: req.user.role === 'vendor' ? 'vendor' : 'customer',
+            price: booking.finalPrice,
+            action: 'accept'
+        });
+
+        await booking.save();
+        res.status(200).json({ status: 'success', data: { booking } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Negotiation: Reject/Cancel
+exports.rejectBooking = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const booking = await Booking.findById(bookingId);
+
+        booking.status = 'cancelled'; // or rejected
+        booking.negotiation.history.push({
+            offeredBy: req.user.role === 'vendor' ? 'vendor' : 'customer',
+            price: booking.negotiation.currentPrice,
+            action: 'reject'
+        });
+
+        await booking.save();
+        res.status(200).json({ status: 'success', data: { booking } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
 
 // Get Bookings (For Customer or Vendor)
 exports.getBookings = async (req, res) => {

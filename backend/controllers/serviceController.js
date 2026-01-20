@@ -140,6 +140,35 @@ exports.moderateService = async (req, res) => {
     }
 };
 
+// Admin: Get All Services (for moderation)
+exports.getAdminServices = async (req, res) => {
+    try {
+        const queryObj = { ...req.query };
+        const excludedFields = ['page', 'sort', 'limit', 'fields'];
+        excludedFields.forEach(el => delete queryObj[el]);
+
+        let query = Service.find(queryObj).populate('vendor', 'name vendorStatus email companyName');
+
+        // Sorting
+        if (req.query.sort) {
+            const sortBy = req.query.sort.split(',').join(' ');
+            query = query.sort(sortBy);
+        } else {
+            query = query.sort('-createdAt');
+        }
+
+        const services = await query;
+
+        res.status(200).json({
+            status: 'success',
+            results: services.length,
+            data: { services }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
 exports.getServiceById = async (req, res) => {
     try {
         const service = await Service.findById(req.params.id).populate('vendor');

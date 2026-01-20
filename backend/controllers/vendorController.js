@@ -15,10 +15,10 @@ exports.createProfile = async (req, res) => {
             ...req.body
         });
 
-        // 3. Link profile to user and set status to pending (should be default but explicit here)
+        // 3. Link profile to user and set status to applied
         await User.findByIdAndUpdate(req.user.id, {
             vendorProfile: newProfile._id,
-            vendorStatus: 'pending'
+            vendorStatus: 'applied'
         });
 
         res.status(201).json({
@@ -113,21 +113,26 @@ exports.searchVendors = async (req, res) => {
     }
 }
 
-// Admin only
-exports.approveVendor = async (req, res) => {
+// Admin only: Manage Vendor Lifecycle
+exports.updateVendorStatus = async (req, res) => {
     try {
         const { vendorId } = req.params;
-        const { status } = req.body; // 'approved' or 'rejected'
+        const { status, remarks } = req.body; // 'verified', 'approved', 'active', 'suspended', 'rejected'
 
-        if (!['approved', 'rejected'].includes(status)) {
-            return res.status(400).json({ status: 'fail', message: 'Invalid status' });
+        const validStatuses = ['applied', 'verified', 'approved', 'active', 'suspended', 'rejected'];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ status: 'fail', message: `Invalid status. Valid statuses: ${validStatuses.join(', ')}` });
         }
 
         const profile = await VendorProfile.findById(vendorId);
         if (!profile) return res.status(404).json({ status: 'fail', message: 'Vendor profile not found' });
 
         // Update Profile
-        profile.isApproved = (status === 'approved');
+        // 'approved' and 'active' imply isApproved = true
+        profile.isApproved = ['approved', 'active'].includes(status);
+        if (remarks) profile.adminRemarks = remarks; // Assuming we add this field or just log it
+
         await profile.save();
 
         // Update User Status
@@ -135,7 +140,8 @@ exports.approveVendor = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            message: `Vendor ${status}`
+            message: `Vendor status updated to ${status}`,
+            data: { status }
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });

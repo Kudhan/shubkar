@@ -3,6 +3,7 @@ const Event = require('../models/Event');
 
 // Customer: Create Booking Request
 // Customer: Start Inquiry / Booking Request
+// Customer: Start Inquiry / Booking Request
 exports.createBooking = async (req, res) => {
     try {
         const { vendorId, eventId, serviceType, date, price, notes } = req.body;
@@ -15,7 +16,12 @@ exports.createBooking = async (req, res) => {
             date,
             status: 'inquiry',
             negotiation: {
-                currentPrice: price, // Initial offer/inquiry price
+                status: 'CUSTOMER_ACCEPTED',
+                currentOffer: {
+                    price: price,
+                    message: notes,
+                    by: 'customer'
+                },
                 history: [{
                     offeredBy: 'customer',
                     price: price,
@@ -53,6 +59,7 @@ const validateBookingAccess = async (booking, user) => {
 };
 
 // Negotiation: Make Offer / Counter-Offer
+// Negotiation: Make Offer / Counter-Offer
 exports.negotiateBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
@@ -64,8 +71,18 @@ exports.negotiateBooking = async (req, res) => {
         const role = await validateBookingAccess(booking, req.user);
         if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
+        // State Transition Logic
+        const newState = role === 'customer' ? 'CUSTOMER_ACCEPTED' : 'VENDOR_ACCEPTED';
+
+        // Update Negotiation State
+        booking.negotiation.status = newState;
+        booking.negotiation.currentOffer = {
+            price: price,
+            message: message,
+            by: role
+        };
+
         // Add to history
-        booking.negotiation.currentPrice = price;
         booking.negotiation.history.push({
             offeredBy: role,
             price: price,
@@ -83,6 +100,7 @@ exports.negotiateBooking = async (req, res) => {
 };
 
 // Negotiation: Accept Offer
+// Negotiation: Accept Offer
 exports.acceptBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
@@ -92,8 +110,20 @@ exports.acceptBooking = async (req, res) => {
         const role = await validateBookingAccess(booking, req.user);
         if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
+        // Validate State
+        const currentStatus = booking.negotiation.status;
+        if (role === 'customer' && currentStatus !== 'VENDOR_ACCEPTED') {
+            return res.status(400).json({ status: 'fail', message: 'Cannot accept. Waiting for vendor offer.' });
+        }
+        if (role === 'vendor' && currentStatus !== 'CUSTOMER_ACCEPTED') {
+            return res.status(400).json({ status: 'fail', message: 'Cannot accept. Waiting for customer offer.' });
+        }
+
+        // Transition
+        booking.negotiation.status = 'BOTH_ACCEPTED';
         booking.status = 'confirmed';
-        booking.finalPrice = booking.negotiation.currentPrice;
+        booking.finalPrice = booking.negotiation.currentOffer.price;
+
         booking.negotiation.history.push({
             offeredBy: role, // Who accepted it
             price: booking.finalPrice,

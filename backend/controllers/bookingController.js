@@ -2,31 +2,6 @@ const Booking = require('../models/Booking');
 const Event = require('../models/Event');
 
 // Customer: Create Booking Request
-exports.createBooking = async (req, res) => {
-    try {
-        const { vendorId, eventId, serviceType, date, price, notes } = req.body;
-
-        const newBooking = await Booking.create({
-            customer: req.user.id,
-            vendor: vendorId,
-            event: eventId,
-            serviceType,
-            date,
-            price,
-            notes
-        });
-
-        res.status(201).json({
-            status: 'success',
-            data: { booking: newBooking }
-        });
-    } catch (err) {
-        console.error('Booking Creation Error:', err); // Debug Log
-        console.log('Request Body:', req.body); // Debug Log
-        res.status(400).json({ status: 'fail', message: err.message });
-    }
-};
-
 // Customer: Start Inquiry / Booking Request
 exports.createBooking = async (req, res) => {
     try {
@@ -56,36 +31,38 @@ exports.createBooking = async (req, res) => {
     }
 };
 
+// Helper to validate access
+const validateBookingAccess = async (booking, user) => {
+    if (user.role === 'vendor') {
+        const VendorProfile = require('../models/VendorProfile');
+        // booking.vendor is an ID of VendorProfile (or populated object)
+        const vendorProfileId = booking.vendor._id || booking.vendor;
+        const profile = await VendorProfile.findOne({ user: user.id });
+
+        if (!profile || profile._id.toString() !== vendorProfileId.toString()) {
+            return false;
+        }
+        return 'vendor';
+    } else {
+        // Customer
+        if (booking.customer.toString() !== user.id) {
+            return false;
+        }
+        return 'customer';
+    }
+};
+
 // Negotiation: Make Offer / Counter-Offer
 exports.negotiateBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
         const { price, message } = req.body;
 
-        const booking = await Booking.findById(bookingId).populate('vendor');
+        const booking = await Booking.findById(bookingId);
         if (!booking) return res.status(404).json({ status: 'fail', message: 'Booking not found' });
 
-        // Identify role (Customer or Vendor)
-        let role = 'customer';
-        if (req.user.role === 'vendor') {
-            // Verify ownership
-            if (booking.vendor.user && booking.vendor.user.toString() !== req.user.id) {
-                // If vendor field is Profile ID, we need to check if req.user owns that profile
-                // Assuming logic here matches Profile check or populate user
-                // For MVP, relying on the fact that we populate 'vendor' which is a Profile, that has a 'user' field?
-                // Let's assume booking.vendor is ObjectId of VendorProfile.
-                // We need to fetch it to check user.
-                // Simpler check:
-                const VendorProfile = require('../models/VendorProfile');
-                const profile = await VendorProfile.findOne({ user: req.user.id });
-                if (!profile || profile._id.toString() !== booking.vendor._id.toString()) {
-                    return res.status(403).json({ status: 'fail', message: 'Not authorized' });
-                }
-                role = 'vendor';
-            }
-        } else if (booking.customer.toString() !== req.user.id) {
-            return res.status(403).json({ status: 'fail', message: 'Not authorized' });
-        }
+        const role = await validateBookingAccess(booking, req.user);
+        if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
         // Add to history
         booking.negotiation.currentPrice = price;
@@ -110,13 +87,15 @@ exports.acceptBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
         const booking = await Booking.findById(bookingId);
+        if (!booking) return res.status(404).json({ status: 'fail', message: 'Booking not found' });
 
-        // Add authorization check similar to above...
+        const role = await validateBookingAccess(booking, req.user);
+        if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
         booking.status = 'confirmed';
         booking.finalPrice = booking.negotiation.currentPrice;
         booking.negotiation.history.push({
-            offeredBy: req.user.role === 'vendor' ? 'vendor' : 'customer',
+            offeredBy: role, // Who accepted it
             price: booking.finalPrice,
             action: 'accept'
         });
@@ -133,10 +112,14 @@ exports.rejectBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
         const booking = await Booking.findById(bookingId);
+        if (!booking) return res.status(404).json({ status: 'fail', message: 'Booking not found' });
+
+        const role = await validateBookingAccess(booking, req.user);
+        if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
         booking.status = 'cancelled'; // or rejected
         booking.negotiation.history.push({
-            offeredBy: req.user.role === 'vendor' ? 'vendor' : 'customer',
+            offeredBy: role,
             price: booking.negotiation.currentPrice,
             action: 'reject'
         });

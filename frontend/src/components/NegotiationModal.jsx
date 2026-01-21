@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, CheckCircle, XCircle, MessageSquare, IndianRupee } from 'lucide-react';
+import { X, Send, CheckCircle, XCircle, MessageSquare, IndianRupee, Clock } from 'lucide-react';
 import api from '../services/api';
 
 const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {

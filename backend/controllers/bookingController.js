@@ -138,6 +138,7 @@ exports.acceptBooking = async (req, res) => {
 };
 
 // Negotiation: Reject/Cancel
+// Negotiation: Reject/Cancel
 exports.rejectBooking = async (req, res) => {
     try {
         const { bookingId } = req.params;
@@ -147,10 +148,12 @@ exports.rejectBooking = async (req, res) => {
         const role = await validateBookingAccess(booking, req.user);
         if (!role) return res.status(403).json({ status: 'fail', message: 'Not authorized' });
 
-        booking.status = 'cancelled'; // or rejected
+        booking.status = 'cancelled';
+        booking.negotiation.status = 'REJECTED';
+
         booking.negotiation.history.push({
             offeredBy: role,
-            price: booking.negotiation.currentPrice,
+            price: booking.negotiation.currentOffer?.price,
             action: 'reject'
         });
 

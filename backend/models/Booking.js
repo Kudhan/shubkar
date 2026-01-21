@@ -30,7 +30,17 @@ const bookingSchema = new mongoose.Schema({
         default: 'inquiry'
     },
     negotiation: {
-        currentPrice: Number,
+        status: {
+            type: String,
+            enum: ['OPEN', 'CUSTOMER_ACCEPTED', 'VENDOR_ACCEPTED', 'BOTH_ACCEPTED', 'REJECTED', 'EXPIRED', 'CANCELLED'],
+            default: 'OPEN'
+        },
+        currentOffer: {
+            price: Number,
+            message: String,
+            by: { type: String, enum: ['customer', 'vendor'] },
+            timestamp: { type: Date, default: Date.now }
+        },
         history: [{
             offeredBy: { type: String, enum: ['customer', 'vendor'] },
             price: Number,

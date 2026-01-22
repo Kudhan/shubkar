@@ -8,13 +8,15 @@ const bookingSchema = new mongoose.Schema({
     },
     vendor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'VendorProfile', // Reference the Profile directly or User? Profile is better for vendor details.
+        ref: 'VendorProfile',
         required: true
     },
+    // CHANGED: Event is likely required now, but we might allow null for migration or specific edge cases
+    // adhering to plan: "Constraint: No booking can exist without being linked to an Event."
     event: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Event',
-        required: false // allowing quick bookings without pre-created event
+        required: [true, 'Booking must belong to an event']
     },
     serviceType: {
         type: String,
@@ -62,5 +64,8 @@ const bookingSchema = new mongoose.Schema({
         default: Date.now
     }
 });
+
+// Index to quickly find bookings for an event
+bookingSchema.index({ event: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

@@ -8,12 +8,45 @@ exports.createBooking = async (req, res) => {
     try {
         const { vendorId, eventId, serviceType, date, price, notes } = req.body;
 
+        // 1. Validate Event Ownership
+        const event = await Event.findOne({ _id: eventId, customer: req.user.id });
+        if (!event) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Event not found. Please create an event first.'
+            });
+        }
+
+        // 2. Validate Vendor Service Location
+        // We need to fetch the vendor profile to check their location
+        const VendorProfile = require('../models/VendorProfile'); // Lazy load or move to top
+        const vendor = await VendorProfile.findById(vendorId);
+
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+
+        const eventCity = event.location.city;
+        const vendorCity = vendor.location.city;
+        // Check if vendor city matches OR if event city is in vendor's serviceCities
+        const isLocationMatch =
+            (vendorCity && vendorCity.toLowerCase() === eventCity.toLowerCase()) ||
+            (vendor.serviceCities && vendor.serviceCities.some(city => city.toLowerCase() === eventCity.toLowerCase()));
+
+        if (!isLocationMatch) {
+            return res.status(400).json({
+                status: 'fail',
+                message: `Vendor does not serve ${eventCity}. Please choose a local vendor.`
+            });
+        }
+
+        // 3. Create Booking linked to Event
         const newBooking = await Booking.create({
             customer: req.user.id,
             vendor: vendorId,
             event: eventId,
             serviceType,
-            date,
+            date: date || event.date.startDate, // Fallback to event date if specific booking date not sent
             status: 'inquiry',
             negotiation: {
                 status: 'CUSTOMER_ACCEPTED',
@@ -197,7 +230,7 @@ exports.getBookings = async (req, res) => {
         const bookings = await Booking.find(query)
             .populate('customer', 'name')
             .populate('vendor', 'companyName')
-            .populate('event', 'name date');
+            .populate('event', 'title date');
 
         res.status(200).json({
             status: 'success',

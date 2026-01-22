@@ -14,6 +14,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import Timeline from './pages/Timeline';
 import Checkout from './pages/Checkout'; // Import Checkout
 import CustomerProfile from './pages/CustomerProfile';
+import CreateEvent from './pages/CreateEvent';
+import EventDashboard from './pages/EventDashboard';
+import EventVendorSearch from './pages/EventVendorSearch'; // Import fixed
+import EditEvent from './pages/EditEvent';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -43,6 +47,10 @@ function App() {
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/checkout" element={<Checkout />} /> {/* Checkout Route */}
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/create" element={<CreateEvent />} />
+            <Route path="/events/:id" element={<EventDashboard />} />
+            <Route path="/events/:id/vendors" element={<EventVendorSearch />} /> {/* New Route */}
+            <Route path="/events/:id/edit" element={<EditEvent />} /> {/* New Route */}
           </Route>
 
           {/* Protected Routes for Vendor */}

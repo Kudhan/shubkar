@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import ChatWindow from '../components/ChatWindow';
-import NegotiationModal from '../components/NegotiationModal'; // Added NegotiationModal
-import { Calendar, CheckCircle, Clock, MessageSquare, Search, Zap, Star, IndianRupee } from 'lucide-react'; // Added IndianRupee
+import NegotiationModal from '../components/NegotiationModal';
+import { Calendar, CheckCircle, Clock, MessageSquare, Search, Zap, Star, IndianRupee } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -11,24 +11,37 @@ const Dashboard = () => {
     const [timelineProgress, setTimelineProgress] = useState(0);
     const [loading, setLoading] = useState(true);
     const [activeChat, setActiveChat] = useState(null);
-    const [activeNegotiation, setActiveNegotiation] = useState(null); // State for negotiation modal
+    const [activeNegotiation, setActiveNegotiation] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
     const refreshBookings = useCallback(async () => {
         try {
-            const [bookingsRes, timelineRes] = await Promise.all([
+            const [bookingsRes, eventsRes] = await Promise.all([
                 api.get('/bookings'),
-                api.get('/timeline')
+                api.get('/events')
             ]);
 
-            setBookings(bookingsRes.data.data.bookings);
+            const statusOrder = { 'inquiry': 1, 'negotiation': 2, 'confirmed': 3, 'completed': 4, 'cancelled': 5, 'rejected': 5 };
+            const sortedBookings = bookingsRes.data.data.bookings.sort((a, b) => {
+                const priorityA = statusOrder[a.status] || 99;
+                const priorityB = statusOrder[b.status] || 99;
+                return priorityA - priorityB;
+            });
+            setBookings(sortedBookings);
 
-            // Calculate Timeline Progress
-            const events = timelineRes.data.data.timeline;
-            const completed = events.filter(e => e.status === 'completed').length;
-            const total = events.length;
-            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-            setTimelineProgress(progress);
+            // Calculate System Progress (Milestones)
+            const events = eventsRes.data.data.events || [];
+            const hasEvent = events.length > 0;
+            const hasBooking = sortedBookings.length > 0;
+            const hasConfirmed = sortedBookings.some(b => b.status === 'confirmed');
+
+            let completedSteps = 1; // Account Created is always done
+            if (hasEvent) completedSteps++;
+            if (hasBooking) completedSteps++;
+            if (hasConfirmed) completedSteps++;
+
+            const totalSteps = 4;
+            setTimelineProgress(Math.round((completedSteps / totalSteps) * 100));
 
         } catch (err) {
             console.error(err);
@@ -43,8 +56,8 @@ const Dashboard = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'confirmed': return 'bg-emerald-100 text-emerald-700 border-emerald-200'; // Changed from accepted to confirmed
-            case 'pending': // Keeping pending for backward compatibility or other states, but mainly inquiry/negotiation
+            case 'confirmed': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'pending':
             case 'inquiry': return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'negotiation': return 'bg-amber-100 text-amber-700 border-amber-200';
             case 'rejected':
@@ -205,12 +218,11 @@ const Dashboard = () => {
                                                     {booking.status === 'negotiation' ? 'Latest Offer' : 'Estimate'}
                                                 </p>
                                                 <p className="font-bold text-gray-900">
-                                                    ₹{(booking.negotiation?.currentPrice || booking.price)?.toLocaleString() || '-'}
+                                                    ₹{(booking.finalPrice || booking.negotiation?.currentOffer?.price || booking.price || 0).toLocaleString()}
                                                 </p>
                                             </div>
 
                                             <div className="flex gap-2">
-                                                {/* Negotiation Button */}
                                                 {(booking.status === 'inquiry' || booking.status === 'negotiation') && (
                                                     <button
                                                         onClick={() => setActiveNegotiation(booking)}
@@ -276,12 +288,13 @@ const Dashboard = () => {
 
                         {/* Recent Activity / Timeline Stub */}
                         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                            <h3 className="font-bold text-gray-900 mb-4">Timeline</h3>
+                            <h3 className="font-bold text-gray-900 mb-4">Planning Milestones</h3>
                             <div className="space-y-4 relative">
                                 <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-gray-100"></div>
 
+                                {/* Milestone 1: Account Created */}
                                 <div className="flex gap-4 relative">
-                                    <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white">
                                         <CheckCircle size={14} />
                                     </div>
                                     <div className="pt-1">
@@ -289,13 +302,37 @@ const Dashboard = () => {
                                         <p className="text-xs text-gray-400">Welcome to SHUBAKAR!</p>
                                     </div>
                                 </div>
+
+                                {/* Milestone 2: Create Event */}
                                 <div className="flex gap-4 relative">
-                                    <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white">
-                                        <Calendar size={14} />
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white ${timelineProgress >= 50 ? 'bg-green-100 text-green-600' : 'bg-gray-50 border border-gray-200 text-gray-400'}`}>
+                                        {timelineProgress >= 50 ? <CheckCircle size={14} /> : <Calendar size={14} />}
                                     </div>
                                     <div className="pt-1">
-                                        <p className="text-sm font-medium text-gray-500">Book First Vendor</p>
-                                        <p className="text-xs text-gray-400">Search for venues...</p>
+                                        <p className={`text-sm font-medium ${timelineProgress >= 50 ? 'text-gray-800 font-bold' : 'text-gray-500'}`}>Create Event</p>
+                                        <p className="text-xs text-gray-400 text-opacity-80">Set date & venue</p>
+                                    </div>
+                                </div>
+
+                                {/* Milestone 3: First Booking */}
+                                <div className="flex gap-4 relative">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white ${timelineProgress >= 75 ? 'bg-green-100 text-green-600' : 'bg-gray-50 border border-gray-200 text-gray-400'}`}>
+                                        {timelineProgress >= 75 ? <CheckCircle size={14} /> : <Search size={14} />}
+                                    </div>
+                                    <div className="pt-1">
+                                        <p className={`text-sm font-medium ${timelineProgress >= 75 ? 'text-gray-800 font-bold' : 'text-gray-500'}`}>Book Vendors</p>
+                                        <p className="text-xs text-gray-400 text-opacity-80">Send inquiries</p>
+                                    </div>
+                                </div>
+
+                                {/* Milestone 4: Confirm Booking */}
+                                <div className="flex gap-4 relative">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-white ${timelineProgress >= 100 ? 'bg-green-100 text-green-600' : 'bg-gray-50 border border-gray-200 text-gray-400'}`}>
+                                        {timelineProgress >= 100 ? <CheckCircle size={14} /> : <Star size={14} />}
+                                    </div>
+                                    <div className="pt-1">
+                                        <p className={`text-sm font-medium ${timelineProgress >= 100 ? 'text-gray-800 font-bold' : 'text-gray-500'}`}>Confirm Vendors</p>
+                                        <p className="text-xs text-gray-400 text-opacity-80">Finalize contracts</p>
                                     </div>
                                 </div>
                             </div>
@@ -305,26 +342,23 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {
-                activeChat && (
-                    <ChatWindow
-                        bookingId={activeChat}
-                        currentUser={user}
-                        onClose={() => setActiveChat(null)}
-                    />
-                )
-            }
-            {
-                activeNegotiation && (
-                    <NegotiationModal
-                        booking={activeNegotiation}
-                        userRole="customer"
-                        onClose={() => setActiveNegotiation(null)}
-                        onUpdate={refreshBookings}
-                    />
-                )
-            }
-        </div >
+            {activeChat && (
+                <ChatWindow
+                    bookingId={activeChat}
+                    currentUser={user}
+                    onClose={() => setActiveChat(null)}
+                />
+            )}
+
+            {activeNegotiation && (
+                <NegotiationModal
+                    booking={activeNegotiation}
+                    userRole="customer"
+                    onClose={() => setActiveNegotiation(null)}
+                    onUpdate={refreshBookings}
+                />
+            )}
+        </div>
     );
 };
 

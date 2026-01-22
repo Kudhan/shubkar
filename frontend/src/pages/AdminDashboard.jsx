@@ -57,7 +57,7 @@ const AdminDashboard = () => {
 
     const handleApproval = async (vendorId, status) => {
         try {
-            await api.patch(`/vendors/approve/${vendorId}`, { status });
+            await api.patch(`/vendors/status/${vendorId}`, { status });
             fetchVendors();
         } catch (err) {
             console.error('Error updating status', err);

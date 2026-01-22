@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import EventModal from '../components/EventModal';
-import { Plus, Calendar, MapPin, Users, DollarSign, Edit, Trash2, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Calendar, MapPin, Users, DollarSign, Edit, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const EventsPage = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null);
+    const navigate = useNavigate();
 
     const fetchEvents = async () => {
         try {
@@ -27,16 +25,6 @@ const EventsPage = () => {
         fetchEvents();
     }, []);
 
-    const handleEdit = (event) => {
-        setSelectedEvent(event);
-        setShowModal(true);
-    };
-
-    const handleCreate = () => {
-        setSelectedEvent(null);
-        setShowModal(true);
-    };
-
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
             <Navbar />
@@ -47,12 +35,12 @@ const EventsPage = () => {
                         <h1 className="text-3xl font-bold text-gray-900 font-secondary">My Events</h1>
                         <p className="text-gray-500 mt-1">Manage all your special occasions in one place.</p>
                     </div>
-                    <button
-                        onClick={handleCreate}
+                    <Link
+                        to="/events/create"
                         className="flex items-center px-6 py-3 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-secondary transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                         <Plus size={20} className="mr-2" /> Create Event
-                    </button>
+                    </Link>
                 </div>
 
                 {loading ? (
@@ -64,17 +52,17 @@ const EventsPage = () => {
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">No events planned yet</h3>
                         <p className="text-gray-500 mb-8 max-w-md mx-auto">Create your first event to start organizing tasks, booking vendors, and managing your budget.</p>
-                        <button
-                            onClick={handleCreate}
+                        <Link
+                            to="/events/create"
                             className="inline-flex items-center px-6 py-3 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-secondary transition-colors"
                         >
                             <Plus size={20} className="mr-2" /> Start Planning
-                        </button>
+                        </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {events.map((event) => (
-                            <div key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden flex flex-col">
+                            <Link to={`/events/${event._id}`} key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden flex flex-col cursor-pointer">
                                 <div className="p-6 flex-1">
                                     <div className="flex justify-between items-start mb-4">
                                         <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary text-xs font-bold rounded-full uppercase tracking-wide">
@@ -94,7 +82,7 @@ const EventsPage = () => {
                                     <div className="space-y-3 text-sm text-gray-600 mt-4">
                                         <div className="flex items-center">
                                             <Calendar size={16} className="mr-3 text-gray-400" />
-                                            {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                            {new Date(event.date.startDate || event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                         </div>
                                         {event.location?.city && (
                                             <div className="flex items-center">
@@ -118,30 +106,19 @@ const EventsPage = () => {
                                 </div>
 
                                 <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center bg-opacity-50">
-                                    <button
-                                        onClick={() => handleEdit(event)}
-                                        className="text-gray-500 hover:text-gray-900 font-semibold text-sm flex items-center"
-                                    >
-                                        <Edit size={16} className="mr-1" /> Edit
-                                    </button>
+                                    <span className="text-gray-500 hover:text-gray-900 font-semibold text-sm flex items-center">
+                                        Manage Event
+                                    </span>
 
-                                    <Link to={`/timeline`} className="text-brand-primary font-bold text-sm flex items-center hover:underline">
-                                        View Timeline <ArrowRight size={16} className="ml-1" />
-                                    </Link>
+                                    <span className="text-brand-primary font-bold text-sm flex items-center group-hover:underline">
+                                        View Dashboard <ArrowRight size={16} className="ml-1" />
+                                    </span>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}
             </div>
-
-            {showModal && (
-                <EventModal
-                    event={selectedEvent}
-                    onClose={() => setShowModal(false)}
-                    onUpdate={fetchEvents}
-                />
-            )}
         </div>
     );
 };

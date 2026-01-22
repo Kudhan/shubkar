@@ -20,7 +20,13 @@ const VendorDashboard = () => {
     const fetchBookings = async () => {
         try {
             const res = await api.get('/bookings');
-            setBookings(res.data.data.bookings);
+            const statusOrder = { 'inquiry': 1, 'negotiation': 2, 'confirmed': 3, 'completed': 4, 'cancelled': 5, 'rejected': 5 };
+            const sortedBookings = res.data.data.bookings.sort((a, b) => {
+                const priorityA = statusOrder[a.status] || 99;
+                const priorityB = statusOrder[b.status] || 99;
+                return priorityA - priorityB;
+            });
+            setBookings(sortedBookings);
         } catch (err) {
             console.error(err);
         } finally {
@@ -179,7 +185,7 @@ const VendorDashboard = () => {
                                                         <h3 className="text-lg font-bold text-gray-900 mr-3">{booking.customer?.name || "Customer"}</h3>
                                                         <p className="text-sm text-gray-500 flex items-center mt-1">
                                                             <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold mr-2">{booking.serviceType}</span>
-                                                            {booking.event?.name && `for ${booking.event.name}`}
+                                                            {booking.event?.title && `for ${booking.event.title}`}
                                                         </p>
                                                     </div>
                                                     <div className="mt-2 sm:mt-0 text-right">
@@ -187,7 +193,7 @@ const VendorDashboard = () => {
                                                         {booking.paymentStatus === 'paid' && (
                                                             <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded border border-green-200">PAID</span>
                                                         )}
-                                                        <p className="font-bold text-gray-900 mt-1">₹{(booking.negotiation?.currentPrice || booking.price)?.toLocaleString()}</p>
+                                                        <p className="font-bold text-gray-900 mt-1">₹{(booking.finalPrice || booking.negotiation?.currentOffer?.price || booking.price || 0).toLocaleString()}</p>
                                                     </div>
                                                 </div>
 

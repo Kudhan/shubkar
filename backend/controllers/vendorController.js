@@ -1,5 +1,6 @@
 const VendorProfile = require('../models/VendorProfile');
 const User = require('../models/User');
+const Event = require('../models/Event');
 
 exports.createProfile = async (req, res) => {
     try {
@@ -112,6 +113,52 @@ exports.searchVendors = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 }
+
+exports.getVendorsForEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            return res.status(404).json({ status: 'fail', message: 'Event not found' });
+        }
+
+        const targetCity = event.location.city;
+        if (!targetCity) {
+            return res.status(400).json({ status: 'fail', message: 'Event does not have a location defined' });
+        }
+
+        // Case-insensitive regex for city matching
+        const cityRegex = new RegExp(`^${targetCity}$`, 'i');
+
+        const query = {
+            isApproved: true,
+            $or: [
+                { "location.city": cityRegex },
+                { "serviceCities": { $in: [cityRegex] } }
+            ]
+        };
+
+        // Optional filters from query params
+        const { service, minPrice, maxPrice } = req.query;
+        if (service) query.services = service;
+        if (minPrice || maxPrice) {
+            query["priceRange.min"] = { $gte: minPrice || 0 };
+        }
+
+        const vendors = await VendorProfile.find(query).populate('user', 'name');
+
+        res.status(200).json({
+            status: 'success',
+            results: vendors.length,
+            eventLocation: targetCity,
+            data: { vendors }
+        });
+
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
 
 // Admin only: Manage Vendor Lifecycle
 exports.updateVendorStatus = async (req, res) => {

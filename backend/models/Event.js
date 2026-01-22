@@ -14,33 +14,40 @@ const eventSchema = new mongoose.Schema({
     eventType: {
         type: String,
         enum: ['Wedding', 'Birthday', 'Corporate', 'Anniversary', 'Other'],
+        required: true,
         default: 'Other'
     },
     date: {
-        type: Date,
-        required: [true, 'Event must have a date']
-    },
-    guestCount: Number,
-    budget: {
-        total: Number,
-        currency: {
-            type: String,
-            default: 'INR'
-        }
+        startDate: { type: Date, required: [true, 'Event must have a start date'] },
+        endDate: Date
     },
     location: {
         city: String,
-        venue: String
+        venue: String,
+        address: String,
+        coordinates: [Number]
+    },
+    guestCount: {
+        type: Number,
+        required: [true, 'Please estimate guest count']
+    },
+    budget: {
+        total: {
+            type: Number,
+            required: [true, 'Please set a total budget']
+        },
+        currency: {
+            type: String,
+            default: 'INR'
+        },
+        // Virtual-like fields or cached aggregations could go here, 
+        // but for now we will calculate spent/committed on the fly or in controller.
     },
     status: {
         type: String,
-        enum: ['planning', 'confirmed', 'completed', 'cancelled'],
+        enum: ['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled'],
         default: 'planning'
     },
-    bookings: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Booking'
-    }],
     tasks: [{
         title: String,
         status: {
@@ -54,6 +61,16 @@ const eventSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual populate bookings
+eventSchema.virtual('bookings', {
+    ref: 'Booking',
+    foreignField: 'event',
+    localField: '_id'
 });
 
 module.exports = mongoose.model('Event', eventSchema);

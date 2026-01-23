@@ -70,7 +70,7 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
                 serviceType: vendor.services?.[0] || 'General'
             }));
         }
-    }, [vendor]);
+    }, [vendor?._id]);
 
     // Handle Event Selection Change
     const handleEventChange = (e) => {

@@ -15,7 +15,8 @@ const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
             setMessages(booking.negotiation.history);
         }
         scrollToBottom();
-    }, [booking]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [booking._id, booking.negotiation?.history?.length]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -26,7 +26,7 @@ const EventModal = ({ event, onClose, onUpdate }) => {
                 venue: event.location?.venue || ''
             });
         }
-    }, [event]);
+    }, [event?._id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

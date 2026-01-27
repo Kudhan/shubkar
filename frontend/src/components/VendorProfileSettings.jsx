@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Save, AlertCircle, CheckCircle, Upload } from 'lucide-react';
+import ServicePlanManager from './ServicePlanManager';
 
 const VendorProfileSettings = () => {
     const [formData, setFormData] = useState({
@@ -13,11 +14,13 @@ const VendorProfileSettings = () => {
         bookingPolicy: '',
         services: [],
         minPrice: '',
-        maxPrice: ''
+        maxPrice: '',
+        portfolio: []
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -35,8 +38,10 @@ const VendorProfileSettings = () => {
                         bookingPolicy: profile.bookingPolicy || '',
                         services: profile.services || [],
                         minPrice: profile.priceRange?.min || '',
-                        maxPrice: profile.priceRange?.max || ''
+                        maxPrice: profile.priceRange?.max || '',
+                        portfolio: profile.portfolio || []
                     });
+                    setNewPortfolioUrl('');
                 }
             } catch (err) {
                 console.error('Error fetching profile', err);
@@ -186,6 +191,64 @@ const VendorProfileSettings = () => {
                         </div>
                     </div>
 
+                    <div className="pt-4 border-t border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Portfolio Images (Direct URLs)</label>
+                        <p className="text-xs text-gray-500 mb-3">Paste direct image URLs (e.g. from Unsplash, Imgur) to showcase your work.</p>
+
+                        <div className="flex gap-2 mb-4">
+                            <input
+                                type="url"
+                                placeholder="https://example.com/modern-wedding-stage.jpg"
+                                value={newPortfolioUrl}
+                                onChange={(e) => setNewPortfolioUrl(e.target.value)}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!newPortfolioUrl) return;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        portfolio: [...(prev.portfolio || []), newPortfolioUrl]
+                                    }));
+                                    setNewPortfolioUrl('');
+                                }}
+                                className="bg-gray-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition-all"
+                            >
+                                Add
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {formData.portfolio?.map((url, idx) => (
+                                <div key={idx} className="relative group aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                                    <img src={url} alt={`Portfolio ${idx}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                portfolio: prev.portfolio.filter((_, i) => i !== idx)
+                                            }));
+                                        }}
+                                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                    >
+                                        <Upload size={14} className="rotate-45" /> {/* Using Upload icon rotated as X/Remove for now if X not imported, wait X is not imported but AlertCircle is. Let's use text X or import X if possible. Actually let's just use existing imported icons or simple text. Wait, "Upload" is imported. I will just use text "X" if icon not available, or re-check imports.
+                                        Imports: `Save, AlertCircle, CheckCircle, Upload`. 
+                                        I can simply use a text 'X' or SVG directly to be safe without changing imports. Or better, just use a simple `<span>`. */}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                </div>
+                            ))}
+                            {formData.portfolio?.length === 0 && (
+                                <div className="col-span-2 md:col-span-4 py-8 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-gray-400">
+                                    <Upload className="mx-auto mb-2 opacity-50" size={24} />
+                                    No images added yet.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="pt-4 flex justify-end">
                         <button
                             type="submit"
@@ -195,7 +258,17 @@ const VendorProfileSettings = () => {
                             <Save size={18} className="mr-2" /> {saving ? 'Saving...' : 'Save Profile'}
                         </button>
                     </div>
+
+
                 </form>
+
+                <div className="my-10 border-t border-gray-100"></div>
+
+                <div className="mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-1">Service Plans & Packages</h2>
+                    <p className="text-sm text-gray-500 mb-6">Create predefined packages for customers to book directly.</p>
+                    <ServicePlanManager />
+                </div>
             </div>
         </div>
     );

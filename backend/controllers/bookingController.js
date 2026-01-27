@@ -4,9 +4,22 @@ const Event = require('../models/Event');
 // Customer: Create Booking Request
 // Customer: Start Inquiry / Booking Request
 // Customer: Start Inquiry / Booking Request
+const ServicePlan = require('../models/ServicePlan');
+
+// Customer: Create Booking Request
 exports.createBooking = async (req, res) => {
     try {
-        const { vendorId, eventId, serviceType, date, price, notes } = req.body;
+        const {
+            vendorId,
+            eventId,
+            serviceType,
+            date,
+            price,
+            notes,
+            servicePlanId,
+            quantity = 1,
+            addOns = [] // Array of { name, quantity } from frontend, but we need to verify prices
+        } = req.body;
 
         // 1. Validate Event Ownership
         const event = await Event.findOne({ _id: eventId, customer: req.user.id });
@@ -17,18 +30,16 @@ exports.createBooking = async (req, res) => {
             });
         }
 
-        // 2. Validate Vendor Service Location
-        // We need to fetch the vendor profile to check their location
-        const VendorProfile = require('../models/VendorProfile'); // Lazy load or move to top
+        // 2. Validate Vendor
+        const VendorProfile = require('../models/VendorProfile');
         const vendor = await VendorProfile.findById(vendorId);
-
         if (!vendor) {
             return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
         }
 
+        // Location Check
         const eventCity = event.location.city;
         const vendorCity = vendor.location.city;
-        // Check if vendor city matches OR if event city is in vendor's serviceCities
         const isLocationMatch =
             (vendorCity && vendorCity.toLowerCase() === eventCity.toLowerCase()) ||
             (vendor.serviceCities && vendor.serviceCities.some(city => city.toLowerCase() === eventCity.toLowerCase()));
@@ -40,24 +51,83 @@ exports.createBooking = async (req, res) => {
             });
         }
 
-        // 3. Create Booking linked to Event
+        let finalPrice = price; // Default to manual price (Legacy/Fallback)
+        let pricingDetails = {};
+        let selectedPlan = null;
+        let selectedAddOnsData = [];
+
+        // 3. Service Plan Logic (If Plan ID Provided)
+        if (servicePlanId) {
+            const plan = await ServicePlan.findById(servicePlanId);
+            if (!plan) {
+                return res.status(404).json({ status: 'fail', message: 'Service Plan not found' });
+            }
+            if (plan.vendor.toString() !== vendorId.toString()) {
+                return res.status(400).json({ status: 'fail', message: 'Plan does not belong to this vendor' });
+            }
+
+            selectedPlan = plan._id;
+
+            // Calculate Base Price
+            let basePrice = 0;
+            if (plan.pricingModel === 'FIXED') {
+                basePrice = plan.price * quantity; // Usually quantity 1 for fixed, but valid multiplier
+            } else {
+                basePrice = plan.price * quantity;
+            }
+
+            // Calculate Add-ons
+            let addOnsTotal = 0;
+            if (addOns && addOns.length > 0) {
+                // Verify add-ons exist in plan
+                selectedAddOnsData = addOns.map(reqAddOn => {
+                    const planAddOn = plan.addOns.find(a => a.name === reqAddOn.name);
+                    if (planAddOn) {
+                        const cost = planAddOn.price * (reqAddOn.quantity || 1);
+                        addOnsTotal += cost;
+                        return {
+                            name: planAddOn.name,
+                            price: planAddOn.price,
+                            quantity: reqAddOn.quantity || 1,
+                            total: cost
+                        };
+                    }
+                    return null;
+                }).filter(a => a !== null);
+            }
+
+            finalPrice = basePrice + addOnsTotal;
+
+            pricingDetails = {
+                basePrice,
+                addOnsTotal,
+                platformFee: 0, // Placeholder
+                grandTotal: finalPrice
+            };
+        }
+
+        // 4. Create Booking
         const newBooking = await Booking.create({
             customer: req.user.id,
             vendor: vendorId,
             event: eventId,
-            serviceType,
-            date: date || event.date.startDate, // Fallback to event date if specific booking date not sent
+            serviceType: serviceType || (selectedPlan ? 'Plan Based' : 'General'),
+            servicePlan: selectedPlan,
+            quantity,
+            selectedAddOns: selectedAddOnsData,
+            pricingDetails,
+            date: date || event.date.startDate,
             status: 'inquiry',
             negotiation: {
                 status: 'CUSTOMER_ACCEPTED',
                 currentOffer: {
-                    price: price,
+                    price: finalPrice,
                     message: notes,
                     by: 'customer'
                 },
                 history: [{
                     offeredBy: 'customer',
-                    price: price,
+                    price: finalPrice,
                     message: notes,
                     action: 'offer'
                 }]

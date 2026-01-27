@@ -144,7 +144,16 @@ const EventVendorSearch = () => {
                             <div key={vendor._id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all group">
                                 <div className="h-48 bg-gray-200 relative">
                                     {vendor.portfolio && vendor.portfolio[0] ? (
-                                        <img src={vendor.portfolio[0]} alt={vendor.companyName} className="w-full h-full object-cover" />
+                                        <img
+                                            src={vendor.portfolio[0]}
+                                            alt={vendor.companyName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                                                e.target.parentElement.classList.add('bg-gray-100');
+                                            }}
+                                        />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
                                             No Image

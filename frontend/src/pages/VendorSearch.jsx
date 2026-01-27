@@ -152,16 +152,31 @@ const VendorSearch = () => {
                                 {filteredVendors.map(vendor => (
                                     <div key={vendor._id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group flex flex-col">
                                         {/* Image Box */}
-                                        <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                            {/* Placeholder Gradient */}
-                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-secondary/20 to-brand-primary/10 group-hover:scale-105 transition-transform duration-500"></div>
-                                            <div className="absolute top-3 right-3">
-                                                <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white text-gray-400 hover:text-red-500 transition-colors">
+                                        <div className="h-48 bg-gray-200 relative overflow-hidden group">
+                                            {vendor.portfolio && vendor.portfolio.length > 0 ? (
+                                                <img
+                                                    src={vendor.portfolio[0]}
+                                                    alt={vendor.companyName}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                                                        e.target.parentElement.classList.add('bg-gray-100');
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-brand-secondary/20 to-brand-primary/10 flex items-center justify-center">
+                                                    <span className="text-gray-400 font-bold opacity-50 text-sm">No Image</span>
+                                                </div>
+                                            )}
+
+                                            <div className="absolute top-3 right-3 z-10">
+                                                <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white text-gray-400 hover:text-red-500 transition-colors shadow-sm">
                                                     <Heart size={18} />
                                                 </button>
                                             </div>
-                                            <div className="absolute bottom-3 left-3">
-                                                <span className="bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide">
+                                            <div className="absolute bottom-3 left-3 z-10">
+                                                <span className="bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide shadow-sm">
                                                     {vendor.services[0]}
                                                 </span>
                                             </div>

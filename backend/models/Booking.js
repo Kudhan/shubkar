@@ -26,6 +26,29 @@ const bookingSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    // CHANGED: New Service Plan Integration
+    servicePlan: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ServicePlan',
+        required: false // Optional for backward compatibility, but recommended for new bookings
+    },
+    quantity: {
+        type: Number,
+        default: 1
+    },
+    selectedAddOns: [{
+        name: String,
+        price: Number,
+        quantity: { type: Number, default: 1 },
+        total: Number
+    }],
+    pricingDetails: {
+        basePrice: Number,      // (Plan Price * Quantity)
+        addOnsTotal: Number,    // Sum of AddOns
+        platformFee: Number,
+        grandTotal: Number      // Should match finalPrice initially
+    },
+
     status: {
         type: String,
         enum: ['inquiry', 'negotiation', 'confirmed', 'completed', 'cancelled', 'disputed', 'refunded'],

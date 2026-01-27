@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import api from '../services/api';
 import {
     CheckCircle, XCircle, Loader, Shield, Search, Filter, MoreHorizontal,
-    Trash2, Eye, FileText, Activity, X, Save
+    Trash2, Eye, FileText, Activity, X, Save, Package
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -11,9 +11,9 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [searchText, setSearchText] = useState('');
 
-    const [services, setServices] = useState([]);
-    const [loadingServices, setLoadingServices] = useState(false);
-    const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'services'
+    const [plans, setPlans] = useState([]);
+    const [loadingPlans, setLoadingPlans] = useState(false);
+    const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'plans'
 
     // Modal States
     const [selectedVendor, setSelectedVendor] = useState(null);
@@ -25,6 +25,7 @@ const AdminDashboard = () => {
 
     // Edit Form State
     const [editFormData, setEditFormData] = useState({});
+    const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
 
     const fetchVendors = async () => {
         try {
@@ -38,21 +39,21 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchServices = async () => {
+    const fetchPlans = async () => {
         try {
-            setLoadingServices(true);
-            const res = await api.get('/services/admin/all');
-            setServices(res.data.data.services);
+            setLoadingPlans(true);
+            const res = await api.get('/service-plans/admin/all');
+            setPlans(res.data.data.plans);
         } catch (err) {
-            console.error('Failed to fetch services:', err);
+            console.error('Failed to fetch plans:', err);
         } finally {
-            setLoadingServices(false);
+            setLoadingPlans(false);
         }
     };
 
     useEffect(() => {
         fetchVendors();
-        fetchServices();
+        fetchPlans();
     }, []);
 
     const handleApproval = async (vendorId, status) => {
@@ -61,17 +62,6 @@ const AdminDashboard = () => {
             fetchVendors();
         } catch (err) {
             console.error('Error updating status', err);
-        }
-    };
-
-    const handleServiceModeration = async (serviceId, status) => {
-        if (status === 'rejected' && !confirm("Reject this service?")) return;
-        try {
-            await api.patch(`/services/${serviceId}/moderate`, { status });
-            fetchServices();
-        } catch (err) {
-            console.error('Error moderating service', err);
-            alert('Failed to update service');
         }
     };
 
@@ -95,8 +85,10 @@ const AdminDashboard = () => {
             experience: vendor.experience,
             teamSize: vendor.teamSize,
             serviceCities: vendor.serviceCities?.join(', ') || '',
-            foundedYear: vendor.foundedYear
+            foundedYear: vendor.foundedYear,
+            portfolio: vendor.portfolio || []
         });
+        setNewPortfolioUrl('');
         setShowEditModal(true);
     };
 
@@ -120,9 +112,6 @@ const AdminDashboard = () => {
         setShowActivityModal(true);
         setLoadingBookings(true);
         try {
-            // Using the bookings endpoint with admin filter
-            // Assuming we updated bookingController to accept vendorId query for admin
-            // Wait, implementation plan said `getBookings` would handle `req.query.vendorId` for admin.
             const res = await api.get(`/bookings?vendorId=${vendor._id}`);
             setVendorBookings(res.data.data.bookings);
         } catch (err) {
@@ -137,9 +126,9 @@ const AdminDashboard = () => {
         v.user?.email.toLowerCase().includes(searchText.toLowerCase())
     );
 
-    const filteredServices = services.filter(s =>
-        s.title.toLowerCase().includes(searchText.toLowerCase()) ||
-        s.vendor?.name?.toLowerCase().includes(searchText.toLowerCase())
+    const filteredPlans = plans.filter(p =>
+        p.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        p.vendor?.companyName?.toLowerCase().includes(searchText.toLowerCase())
     );
 
     return (
@@ -166,9 +155,9 @@ const AdminDashboard = () => {
                                 Vendors
                             </button>
                             <button
-                                onClick={() => setActiveTab('services')}
-                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'services' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
-                                Services
+                                onClick={() => setActiveTab('plans')}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'plans' ? 'bg-brand-primary text-white shadow-md' : 'text-gray-500 hover:text-brand-primary'}`}>
+                                Service Plans
                             </button>
                         </div>
 
@@ -176,7 +165,7 @@ const AdminDashboard = () => {
                             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder={`Search ${activeTab}...`}
+                                placeholder={`Search ${activeTab === 'vendors' ? 'vendors' : 'plans'}...`}
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 w-full"
@@ -196,9 +185,9 @@ const AdminDashboard = () => {
                         <h3 className="text-3xl font-bold text-amber-600">{vendors.filter(v => !v.isApproved).length}</h3>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <p className="text-gray-500 text-sm font-medium">Pending Services</p>
+                        <p className="text-gray-500 text-sm font-medium">Active Plans</p>
                         <h3 className="text-3xl font-bold text-blue-600 font-secondary">
-                            {services.filter(s => s.lifecycleStatus === 'submitted').length}
+                            {plans.length}
                         </h3>
                     </div>
                 </div>
@@ -305,56 +294,44 @@ const AdminDashboard = () => {
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
                                     <tr>
-                                        <th className="p-5">Service Info</th>
+                                        <th className="p-5">Plan Name</th>
                                         <th className="p-5">Vendor</th>
-                                        <th className="p-5">Price</th>
-                                        <th className="p-5">Status</th>
-                                        <th className="p-5 text-right">Moderation</th>
+                                        <th className="p-5">Pricing</th>
+                                        <th className="p-5">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {loadingServices ? (
-                                        <tr><td colSpan="5" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading services...</td></tr>
-                                    ) : filteredServices.length === 0 ? (
-                                        <tr><td colSpan="5" className="p-10 text-center text-gray-500">No services found.</td></tr>
+                                    {loadingPlans ? (
+                                        <tr><td colSpan="4" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading plans...</td></tr>
+                                    ) : filteredPlans.length === 0 ? (
+                                        <tr><td colSpan="4" className="p-10 text-center text-gray-500">No plans found.</td></tr>
                                     ) : (
-                                        filteredServices.map((service) => (
-                                            <tr key={service._id} className="hover:bg-gray-50/80 transition-colors group">
+                                        filteredPlans.map((plan) => (
+                                            <tr key={plan._id} className="hover:bg-gray-50/80 transition-colors group">
                                                 <td className="p-5">
-                                                    <p className="font-bold text-gray-900">{service.title}</p>
-                                                    <p className="text-xs text-gray-500 truncate max-w-xs">{service.description}</p>
-                                                </td>
-                                                <td className="p-5">
-                                                    <p className="text-sm font-medium">{service.vendor?.companyName || service.vendor?.name}</p>
-                                                </td>
-                                                <td className="p-5 border-t border-gray-100 font-medium">
-                                                    ₹{service.basePrice} <span className="text-xs text-gray-400">/{service.priceUnit}</span>
-                                                </td>
-                                                <td className="p-5">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase
-                                                        ${service.lifecycleStatus === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                                                            service.lifecycleStatus === 'submitted' ? 'bg-blue-100 text-blue-700' :
-                                                                service.lifecycleStatus === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                        {service.lifecycleStatus}
-                                                    </span>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    {service.lifecycleStatus === 'submitted' && (
-                                                        <div className="flex justify-end gap-2">
-                                                            <button
-                                                                onClick={() => handleServiceModeration(service._id, 'approved')}
-                                                                className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700"
-                                                            >
-                                                                Approve
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleServiceModeration(service._id, 'rejected')}
-                                                                className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200"
-                                                            >
-                                                                Reject
-                                                            </button>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+                                                            <Package size={20} />
                                                         </div>
-                                                    )}
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">{plan.name}</p>
+                                                            <p className="text-xs text-brand-primary bg-brand-primary/5 px-2 py-0.5 rounded-full w-fit mt-1">
+                                                                {plan.pricingModel}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-5">
+                                                    <p className="text-sm font-medium">{plan.vendor?.companyName || 'Unknown Vendor'}</p>
+                                                    <p className="text-xs text-gray-500">{plan.vendor?.email}</p>
+                                                </td>
+                                                <td className="p-5 font-medium">
+                                                    ₹{plan.price}
+                                                    {plan.pricingModel === 'PER_UNIT' && <span className="text-xs text-gray-500"> / {plan.unitType}</span>}
+                                                </td>
+                                                <td className="p-5">
+                                                    <p className="text-xs text-gray-600 max-w-xs truncate">{plan.description}</p>
+                                                    {plan.addOns?.length > 0 && <p className="text-xs text-gray-400 mt-1">+{plan.addOns.length} add-ons</p>}
                                                 </td>
                                             </tr>
                                         ))
@@ -457,80 +434,134 @@ const AdminDashboard = () => {
                                     className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea
-                                    rows="4"
-                                    value={editFormData.description}
-                                    onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none"
-                                />
-                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                                rows="4"
+                                value={editFormData.description}
+                                onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none"
+                            />
                         </div>
 
-                        <div className="mt-8 flex justify-end gap-3">
-                            <button onClick={() => setShowEditModal(false)} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancel</button>
-                            <button onClick={handleEditSave} className="px-6 py-2 bg-brand-primary text-white rounded-xl font-medium hover:bg-brand-primary/90 flex items-center">
-                                <Save size={18} className="mr-2" /> Save Changes
-                            </button>
+                        {/* Portfolio Images Management */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Portfolio Images (Direct URLs)</label>
+
+                            <div className="flex gap-2 mb-3">
+                                <input
+                                    type="url"
+                                    placeholder="https://example.com/image.jpg"
+                                    value={newPortfolioUrl}
+                                    onChange={(e) => setNewPortfolioUrl(e.target.value)}
+                                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-brand-primary/50 outline-none"
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (!newPortfolioUrl) return;
+                                        setEditFormData(prev => ({
+                                            ...prev,
+                                            portfolio: [...(prev.portfolio || []), newPortfolioUrl]
+                                        }));
+                                        setNewPortfolioUrl('');
+                                    }}
+                                    className="px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors"
+                                >
+                                    Add
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                {editFormData.portfolio?.map((url, idx) => (
+                                    <div key={idx} className="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                        <img src={url} alt={`Portfolio ${idx}`} className="w-full h-full object-cover" />
+                                        <button
+                                            onClick={() => {
+                                                setEditFormData(prev => ({
+                                                    ...prev,
+                                                    portfolio: prev.portfolio.filter((_, i) => i !== idx)
+                                                }));
+                                            }}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {editFormData.portfolio?.length === 0 && (
+                                    <div className="col-span-3 text-center py-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-gray-400 text-xs">
+                                        No images added yet.
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="mt-8 flex justify-end gap-3">
+                        <button onClick={() => setShowEditModal(false)} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancel</button>
+                        <button onClick={handleEditSave} className="px-6 py-2 bg-brand-primary text-white rounded-xl font-medium hover:bg-brand-primary/90 flex items-center">
+                            <Save size={18} className="mr-2" /> Save Changes
+                        </button>
                     </div>
                 </div>
             )}
 
             {/* ACTIVITY MODAL */}
-            {showActivityModal && selectedVendor && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 relative">
-                        <button onClick={() => setShowActivityModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900">
-                            <X size={24} />
-                        </button>
-                        <h2 className="text-2xl font-bold font-secondary mb-2 text-gray-900">Vendor Activity Log</h2>
-                        <p className="text-gray-500 mb-6">Booking history for {selectedVendor.companyName}</p>
+            {
+                showActivityModal && selectedVendor && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 relative">
+                            <button onClick={() => setShowActivityModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900">
+                                <X size={24} />
+                            </button>
+                            <h2 className="text-2xl font-bold font-secondary mb-2 text-gray-900">Vendor Activity Log</h2>
+                            <p className="text-gray-500 mb-6">Booking history for {selectedVendor.companyName}</p>
 
-                        {loadingBookings ? (
-                            <div className="py-20 text-center"><Loader className="animate-spin inline mr-2 text-brand-primary" /> Loading activities...</div>
-                        ) : vendorBookings.length === 0 ? (
-                            <div className="py-20 text-center bg-gray-50 rounded-xl text-gray-500">No bookings found for this vendor.</div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                        <tr>
-                                            <th className="p-4">Date</th>
-                                            <th className="p-4">Customer</th>
-                                            <th className="p-4">Service</th>
-                                            <th className="p-4">Status</th>
-                                            <th className="p-4 text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {vendorBookings.map(booking => (
-                                            <tr key={booking._id}>
-                                                <td className="p-4 text-gray-900">{new Date(booking.date).toLocaleDateString()}</td>
-                                                <td className="p-4 font-medium">{booking.customer?.name || 'Unknown'}</td>
-                                                <td className="p-4 text-gray-500">{booking.serviceType}</td>
-                                                <td className="p-4">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase
-                                                        ${booking.status === 'confirmed' || booking.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                                                            booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                        {booking.status}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-right font-bold text-gray-900">
-                                                    {booking.price ? `₹${booking.price}` : '-'}
-                                                </td>
+                            {loadingBookings ? (
+                                <div className="py-20 text-center"><Loader className="animate-spin inline mr-2 text-brand-primary" /> Loading activities...</div>
+                            ) : vendorBookings.length === 0 ? (
+                                <div className="py-20 text-center bg-gray-50 rounded-xl text-gray-500">No bookings found for this vendor.</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                            <tr>
+                                                <th className="p-4">Date</th>
+                                                <th className="p-4">Customer</th>
+                                                <th className="p-4">Service</th>
+                                                <th className="p-4">Status</th>
+                                                <th className="p-4 text-right">Amount</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {vendorBookings.map(booking => (
+                                                <tr key={booking._id}>
+                                                    <td className="p-4 text-gray-900">{new Date(booking.date).toLocaleDateString()}</td>
+                                                    <td className="p-4 font-medium">{booking.customer?.name || 'Unknown'}</td>
+                                                    <td className="p-4 text-gray-500">{booking.serviceType}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase
+                                                        ${booking.status === 'confirmed' || booking.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                                                                booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                            {booking.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-right font-bold text-gray-900">
+                                                        {booking.price ? `₹${booking.price}` : '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

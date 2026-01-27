@@ -36,6 +36,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/timeline', timelineRoutes);
 app.use('/api/services', require('./routes/serviceRoutes'));
+app.use('/api/service-plans', require('./routes/servicePlanRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 

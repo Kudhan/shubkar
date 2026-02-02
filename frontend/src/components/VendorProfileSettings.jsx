@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Save, AlertCircle, CheckCircle, Upload } from 'lucide-react';
-import ServicePlanManager from './ServicePlanManager';
 
 const VendorProfileSettings = () => {
     const [formData, setFormData] = useState({
@@ -263,12 +262,6 @@ const VendorProfileSettings = () => {
                 </form>
 
                 <div className="my-10 border-t border-gray-100"></div>
-
-                <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-1">Service Plans & Packages</h2>
-                    <p className="text-sm text-gray-500 mb-6">Create predefined packages for customers to book directly.</p>
-                    <ServicePlanManager />
-                </div>
             </div>
         </div>
     );

@@ -2,18 +2,14 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import VendorProfileSettings from '../components/VendorProfileSettings';
-import ServiceForm from '../components/ServiceForm';
-import ServiceCard from '../components/ServiceCard';
+import ServicePlanManager from '../components/ServicePlanManager';
 import NegotiationModal from '../components/NegotiationModal';
 import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid } from 'lucide-react';
 
 const VendorDashboard = () => {
     const [bookings, setBookings] = useState([]);
-    const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [servicesLoading, setServicesLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('bookings');
-    const [showServiceModal, setShowServiceModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -34,21 +30,8 @@ const VendorDashboard = () => {
         }
     };
 
-    const fetchServices = async () => {
-        setServicesLoading(true);
-        try {
-            const res = await api.get('/services/my/services'); // Ensure this endpoint exists
-            setServices(res.data.data.services);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setServicesLoading(false);
-        }
-    };
-
     useEffect(() => {
         fetchBookings();
-        fetchServices();
     }, []);
 
     const handleAction = async (bookingId, status) => {
@@ -111,9 +94,9 @@ const VendorDashboard = () => {
                             <Layout size={16} className="inline mr-2" /> Bookings
                         </button>
                         <button
-                            onClick={() => setActiveTab('services')}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'services' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
-                            <Briefcase size={16} className="inline mr-2" /> Services
+                            onClick={() => setActiveTab('plans')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'plans' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Briefcase size={16} className="inline mr-2" /> Plans
                         </button>
                         <button
                             onClick={() => setActiveTab('profile')}
@@ -226,53 +209,20 @@ const VendorDashboard = () => {
                             )}
                         </div>
                     </div>
-                ) : activeTab === 'services' ? (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold font-secondary">My Services</h2>
-                            <button
-                                onClick={() => setShowServiceModal(true)}
-                                className="px-4 py-2 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-secondary transition-colors shadow-lg"
-                            >
-                                + Add Service
-                            </button>
+                ) : activeTab === 'plans' ? (
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 font-secondary">Service Plans & Packages</h2>
+                            <p className="text-gray-500">Create predefined packages for customers to book directly.</p>
                         </div>
-
-                        {servicesLoading ? (
-                            <div className="text-center py-10">Loading services...</div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {services.map(service => (
-                                    <ServiceCard key={service._id} service={service} onUpdate={fetchServices} />
-                                ))}
-                                {services.length === 0 && (
-                                    <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                                        <p className="text-gray-500 mb-4">You haven't listed any services yet.</p>
-                                        <button
-                                            onClick={() => setShowServiceModal(true)}
-                                            className="text-brand-purple font-bold hover:underline"
-                                        >
-                                            Create your first service listing
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        <ServicePlanManager />
                     </div>
                 ) : (
                     <VendorProfileSettings />
                 )}
             </div>
 
-            {showServiceModal && (
-                <ServiceForm
-                    onClose={() => setShowServiceModal(false)}
-                    onServiceAdded={() => {
-                        fetchServices();
-                        // Optional: show toast
-                    }}
-                />
-            )}
+
 
             {selectedBooking && (
                 <NegotiationModal

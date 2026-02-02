@@ -5,6 +5,7 @@ import ChatWindow from '../components/ChatWindow';
 import NegotiationModal from '../components/NegotiationModal';
 import { Calendar, CheckCircle, Clock, MessageSquare, Search, Zap, Star, IndianRupee } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import InvoiceModal from '../components/InvoiceModal';
 
 const Dashboard = () => {
     const [bookings, setBookings] = useState([]);
@@ -12,6 +13,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [activeChat, setActiveChat] = useState(null);
     const [activeNegotiation, setActiveNegotiation] = useState(null);
+    const [activeInvoice, setActiveInvoice] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
     const refreshBookings = useCallback(async () => {
@@ -247,7 +249,7 @@ const Dashboard = () => {
                                                         <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold border border-green-200 flex items-center">
                                                             <CheckCircle size={12} className="mr-1" /> Paid
                                                         </span>
-                                                        <button onClick={() => alert(`Invoice #${booking.transactionId}\nAmount: ₹${booking.price}\nStatus: Paid`)} className="text-xs text-gray-500 underline hover:text-brand-primary">
+                                                        <button onClick={() => setActiveInvoice(booking)} className="text-xs text-gray-500 underline hover:text-brand-primary">
                                                             Invoice
                                                         </button>
                                                     </div>
@@ -356,6 +358,14 @@ const Dashboard = () => {
                     userRole="customer"
                     onClose={() => setActiveNegotiation(null)}
                     onUpdate={refreshBookings}
+                />
+            )}
+
+            {activeInvoice && (
+                <InvoiceModal
+                    booking={activeInvoice}
+                    user={user}
+                    onClose={() => setActiveInvoice(null)}
                 />
             )}
         </div>

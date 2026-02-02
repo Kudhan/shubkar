@@ -174,7 +174,7 @@ const EventDashboard = () => {
                         </div>
                     </div>
                 ) : (
-                    <BudgetDash eventId={id} />
+                    <BudgetDash eventData={event} />
                 )}
             </div>
         </div>

@@ -110,7 +110,7 @@ const VendorDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     <StatCard
                         title="Total Revenue (Est)"
-                        value={`₹${bookings.filter(b => b.status === 'confirmed').reduce((sum, b) => sum + (b.negotiation?.currentPrice || b.price || 0), 0).toLocaleString()}`}
+                        value={`₹${bookings.filter(b => b.status === 'confirmed').reduce((sum, b) => sum + (b.finalPrice || b.pricingDetails?.grandTotal || b.negotiation?.currentOffer?.price || 0), 0).toLocaleString()}`}
                         icon={DollarSign}
                         color="bg-emerald-50 text-emerald-600"
                         trend="+12%"
@@ -176,7 +176,7 @@ const VendorDashboard = () => {
                                                         {booking.paymentStatus === 'paid' && (
                                                             <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded border border-green-200">PAID</span>
                                                         )}
-                                                        <p className="font-bold text-gray-900 mt-1">₹{(booking.finalPrice || booking.negotiation?.currentOffer?.price || booking.price || 0).toLocaleString()}</p>
+                                                        <p className="font-bold text-gray-900 mt-1">₹{(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0).toLocaleString()}</p>
                                                     </div>
                                                 </div>
 

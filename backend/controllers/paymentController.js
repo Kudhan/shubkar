@@ -3,14 +3,34 @@ const Transaction = require('../models/Transaction');
 
 // Mock Payment Gateway processing
 exports.processPayment = async (req, res) => {
+    console.log("--------------------------------------------------");
+    console.log("PROCESSING MOCK PAYMENT");
+    console.log("Timestamp:", new Date().toISOString());
+    console.log("Request Body:", JSON.stringify(req.body, null, 2));
+
     try {
         const { bookingId, amount, paymentMethod } = req.body;
 
+        if (!bookingId) {
+            console.error("Error: Missing bookingId in request");
+            return res.status(400).json({ status: 'fail', message: 'Missing bookingId' });
+        }
+
         // Validate Booking
-        const booking = await Booking.findById(bookingId);
+        let booking;
+        try {
+            booking = await Booking.findById(bookingId);
+        } catch (dboErr) {
+            console.error("Database Error finding booking:", dboErr);
+            return res.status(400).json({ status: 'fail', message: 'Invalid booking ID format' });
+        }
+
         if (!booking) {
+            console.error("Error: Booking not found for ID:", bookingId);
             return res.status(404).json({ status: 'fail', message: 'Booking not found' });
         }
+
+        console.log("Found Booking:", booking._id, "Current Status:", booking.status);
 
         // Simulate Processing Delay
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -23,15 +43,19 @@ exports.processPayment = async (req, res) => {
 
         // If booking was in negotiation/inquiry, confirm it now
         if (booking.status !== 'completed' && booking.status !== 'cancelled') {
+            console.log("Updating status to confirmed");
             booking.status = 'confirmed';
         }
 
         // Ensure final price is set if not already
         if (!booking.finalPrice) {
-            booking.finalPrice = amount;
+            console.log("Setting finalPrice to amount:", amount);
+            booking.finalPrice = amount || 0;
         }
 
         await booking.save();
+        console.log("Payment Processed Successfully. Transaction ID:", transactionId);
+        console.log("--------------------------------------------------");
 
         res.status(200).json({
             status: 'success',
@@ -44,7 +68,7 @@ exports.processPayment = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Payment Error:", err);
+        console.error("CRITICAL PAYMENT ERROR:", err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 };

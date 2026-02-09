@@ -13,7 +13,17 @@ const BudgetDash = ({ eventData }) => {
 
         // Transform bookings into expenses format expected by children
         const expenses = (eventData.bookings || []).map(booking => {
-            const amount = booking.finalPrice || booking.price || 0;
+            // Determine the amount based on potential fields
+            // Priority: finalPrice (if confirmed) > pricingDetails.grandTotal > negotiation.currentOffer.price > 0
+            let amount = 0;
+            if (booking.finalPrice) {
+                amount = booking.finalPrice;
+            } else if (booking.pricingDetails && booking.pricingDetails.grandTotal) {
+                amount = booking.pricingDetails.grandTotal;
+            } else if (booking.negotiation && booking.negotiation.currentOffer) {
+                amount = booking.negotiation.currentOffer.price || 0;
+            }
+
             const isPaid = booking.paymentStatus === 'paid';
 
             return {

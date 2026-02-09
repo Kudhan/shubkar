@@ -220,7 +220,7 @@ const Dashboard = () => {
                                                     {booking.status === 'negotiation' ? 'Latest Offer' : 'Estimate'}
                                                 </p>
                                                 <p className="font-bold text-gray-900">
-                                                    ₹{(booking.finalPrice || booking.negotiation?.currentOffer?.price || booking.price || 0).toLocaleString()}
+                                                    ₹{(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0).toLocaleString()}
                                                 </p>
                                             </div>
 

@@ -25,7 +25,7 @@ const Checkout = () => {
         try {
             await api.post('/payments/pay', {
                 bookingId: booking._id,
-                amount: booking.price,
+                amount: booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0,
                 paymentMethod: 'credit_card'
             });
             setSuccess(true);
@@ -86,7 +86,7 @@ const Checkout = () => {
 
                             <div className="border-t border-gray-100 pt-4 flex justify-between items-center text-xl font-bold">
                                 <span>Total Amount</span>
-                                <span className="text-brand-primary">₹{booking.price?.toLocaleString()}</span>
+                                <span className="text-brand-primary">₹{(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0).toLocaleString()}</span>
                             </div>
 
                             <div className="mt-6 flex items-center text-xs text-gray-400 bg-gray-50 p-3 rounded-lg">
@@ -154,7 +154,7 @@ const Checkout = () => {
                                     type="submit"
                                     disabled={loading}
                                     className="w-full bg-brand-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-primary/30 hover:bg-brand-primary/90 transition-all transform hover:-translate-y-0.5 flex items-center justify-center">
-                                    {loading ? <Loader className="animate-spin" /> : `Pay ₹${booking.price?.toLocaleString()}`}
+                                    {loading ? <Loader className="animate-spin" /> : `Pay ₹${(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0).toLocaleString()}`}
                                 </button>
 
                                 <p className="text-center text-xs text-gray-400 mt-4">

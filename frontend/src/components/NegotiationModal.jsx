@@ -5,7 +5,7 @@ import api from '../services/api';
 const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [offerPrice, setOfferPrice] = useState(booking.negotiation?.currentPrice || booking.price || 0);
+    const [offerPrice, setOfferPrice] = useState(booking.negotiation?.currentOffer?.price || 0);
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
 

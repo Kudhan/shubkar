@@ -548,7 +548,7 @@ const AdminDashboard = () => {
                                                         </span>
                                                     </td>
                                                     <td className="p-4 text-right font-bold text-gray-900">
-                                                        {booking.price ? `₹${booking.price}` : '-'}
+                                                        {(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0) ? `₹${(booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0)}` : '-'}
                                                     </td>
                                                 </tr>
                                             ))}

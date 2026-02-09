@@ -13,7 +13,7 @@ const InvoiceModal = ({ booking, onClose, user }) => {
     // Calculate dates
     const invoiceDate = new Date().toLocaleDateString();
     const dueDate = new Date(booking.date).toLocaleDateString();
-    
+
     // Fallback for user data if not passed or incomplete
     const customerName = user?.name || "Customer";
     const customerEmail = user?.email || "customer@example.com";
@@ -27,13 +27,13 @@ const InvoiceModal = ({ booking, onClose, user }) => {
         }).format(amount);
     };
 
-    const amount = booking.finalPrice || booking.price || 0;
+    const amount = booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0;
     const tax = amount * 0.18; // Assuming 18% GST for example
     const total = amount + tax;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-            <div 
+            <div
                 ref={modalRef}
                 className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up"
             >
@@ -47,14 +47,14 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                         <p className="text-gray-400 text-sm">Invoice #{booking.transactionId || `INV-${booking._id.substr(-6).toUpperCase()}`}</p>
                     </div>
                     <div className="flex gap-3 print:hidden">
-                        <button 
+                        <button
                             onClick={handlePrint}
                             className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white"
                             title="Print Invoice"
                         >
                             <Printer size={20} />
                         </button>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="p-2 bg-white/10 hover:bg-red-500/80 rounded-xl transition-colors text-white"
                         >
@@ -139,7 +139,7 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                             <Mail size={16} /> Email Invoice
                         </button>
                     </div>
-                    
+
                     <div className="mt-8 text-center text-xs text-gray-400 print:mt-4">
                         <p>Thank you for choosing Shubakar for your event planning needs.</p>
                     </div>

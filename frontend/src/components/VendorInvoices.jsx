@@ -4,14 +4,20 @@ import InvoiceModal from './InvoiceModal';
 
 const VendorInvoices = ({ bookings, user }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('paid');
     const [selectedBooking, setSelectedBooking] = useState(null);
 
-    // Filter for completed/confirmed bookings
-    const invocableBookings = bookings.filter(b =>
+    // Filter confirmed/completed bookings
+    const relevantBookings = bookings.filter(b =>
         (b.status === 'confirmed' || b.status === 'completed') &&
         (b.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             b._id.includes(searchTerm))
     );
+
+    const paidBookings = relevantBookings.filter(b => ['escrow', 'released'].includes(b.paymentStatus));
+    const pendingBookings = relevantBookings.filter(b => !['escrow', 'released'].includes(b.paymentStatus));
+
+    const displayBookings = activeTab === 'paid' ? paidBookings : pendingBookings;
 
     return (
         <div className="space-y-6">
@@ -29,6 +35,23 @@ const VendorInvoices = ({ bookings, user }) => {
                 </div>
             </div>
 
+            <div className="flex gap-4 border-b border-gray-100 mb-6">
+                <button
+                    onClick={() => setActiveTab('paid')}
+                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'paid' ? 'text-brand-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Paid Invoices ({paidBookings.length})
+                    {activeTab === 'paid' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full"></div>}
+                </button>
+                <button
+                    onClick={() => setActiveTab('pending')}
+                    className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'pending' ? 'text-brand-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Pending Payments ({pendingBookings.length})
+                    {activeTab === 'pending' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full"></div>}
+                </button>
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b border-gray-100">
@@ -41,12 +64,12 @@ const VendorInvoices = ({ bookings, user }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {invocableBookings.length === 0 ? (
+                        {displayBookings.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="py-8 text-center text-gray-500">No invoices found.</td>
+                                <td colSpan="5" className="py-8 text-center text-gray-500">No {activeTab} invoices found.</td>
                             </tr>
                         ) : (
-                            invocableBookings.map((booking) => (
+                            displayBookings.map((booking) => (
                                 <tr key={booking._id} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="py-4 px-6 font-medium text-gray-900">
                                         #{booking.transactionId || booking._id.substr(-6).toUpperCase()}

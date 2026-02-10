@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { X, Printer, Download, CheckCircle, Mail } from 'lucide-react';
+import { X, Printer, Download, CheckCircle, Mail, Clock } from 'lucide-react';
 
 const InvoiceModal = ({ booking, onClose, user }) => {
     const modalRef = useRef();
@@ -71,8 +71,19 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                             <h2 className="text-3xl font-bold text-gray-900 mb-1">Invoice</h2>
                             <p className="text-gray-500">Date: {invoiceDate}</p>
                         </div>
-                        <div className="px-4 py-1.5 bg-green-100 text-green-700 border border-green-200 rounded-full font-bold uppercase tracking-wide flex items-center text-sm">
-                            <CheckCircle size={16} className="mr-1.5" /> Paid
+                        <div className={`px-4 py-1.5 rounded-full font-bold uppercase tracking-wide flex items-center text-sm border ${['escrow', 'released'].includes(booking.paymentStatus)
+                            ? 'bg-green-100 text-green-700 border-green-200'
+                            : 'bg-amber-100 text-amber-700 border-amber-200'
+                            }`}>
+                            {['escrow', 'released'].includes(booking.paymentStatus) ? (
+                                <>
+                                    <CheckCircle size={16} className="mr-1.5" /> Paid
+                                </>
+                            ) : (
+                                <>
+                                    <Clock size={16} className="mr-1.5" /> {booking.paymentStatus || 'Pending'}
+                                </>
+                            )}
                         </div>
                     </div>
 

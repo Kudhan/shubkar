@@ -39,6 +39,7 @@ app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/service-plans', require('./routes/servicePlanRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 
 app.get('/', (req, res) => {

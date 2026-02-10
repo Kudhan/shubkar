@@ -5,7 +5,10 @@ import VendorProfileSettings from '../components/VendorProfileSettings';
 import ServicePlanManager from '../components/ServicePlanManager';
 import NegotiationModal from '../components/NegotiationModal';
 import UpcomingSchedule from '../components/UpcomingSchedule';
-import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid } from 'lucide-react';
+import VendorReviews from '../components/VendorReviews';
+import VendorInvoices from '../components/VendorInvoices';
+import VendorCalendar from '../components/VendorCalendar';
+import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid, FileText, Star, Lock } from 'lucide-react';
 
 const VendorDashboard = () => {
     const [bookings, setBookings] = useState([]);
@@ -108,6 +111,21 @@ const VendorDashboard = () => {
                             onClick={() => setActiveTab('schedule')}
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'schedule' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
                             <Calendar size={16} className="inline mr-2" /> Schedule
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('calendar')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'calendar' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Lock size={16} className="inline mr-2" /> Availability
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('reviews')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'reviews' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Star size={16} className="inline mr-2" /> Reviews
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('invoices')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'invoices' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <FileText size={16} className="inline mr-2" /> Invoices
                         </button>
                     </div>
                 </div>
@@ -230,6 +248,12 @@ const VendorDashboard = () => {
                     </div>
                 ) : activeTab === 'schedule' ? (
                     <UpcomingSchedule bookings={bookings} />
+                ) : activeTab === 'calendar' ? (
+                    <VendorCalendar />
+                ) : activeTab === 'reviews' ? (
+                    <VendorReviews />
+                ) : activeTab === 'invoices' ? (
+                    <VendorInvoices bookings={bookings} user={user} />
                 ) : (
                     <VendorProfileSettings />
                 )}

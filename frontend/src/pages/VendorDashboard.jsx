@@ -4,6 +4,7 @@ import api from '../services/api';
 import VendorProfileSettings from '../components/VendorProfileSettings';
 import ServicePlanManager from '../components/ServicePlanManager';
 import NegotiationModal from '../components/NegotiationModal';
+import UpcomingSchedule from '../components/UpcomingSchedule';
 import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid } from 'lucide-react';
 
 const VendorDashboard = () => {
@@ -102,6 +103,11 @@ const VendorDashboard = () => {
                             onClick={() => setActiveTab('profile')}
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'profile' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
                             <Settings size={16} className="inline mr-2" /> Profile
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('schedule')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'schedule' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Calendar size={16} className="inline mr-2" /> Schedule
                         </button>
                     </div>
                 </div>
@@ -217,6 +223,8 @@ const VendorDashboard = () => {
                         </div>
                         <ServicePlanManager />
                     </div>
+                ) : activeTab === 'schedule' ? (
+                    <UpcomingSchedule bookings={bookings} />
                 ) : (
                     <VendorProfileSettings />
                 )}

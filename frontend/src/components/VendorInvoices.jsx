@@ -14,8 +14,8 @@ const VendorInvoices = ({ bookings, user }) => {
             b._id.includes(searchTerm))
     );
 
-    const paidBookings = relevantBookings.filter(b => ['escrow', 'released'].includes(b.paymentStatus));
-    const pendingBookings = relevantBookings.filter(b => !['escrow', 'released'].includes(b.paymentStatus));
+    const paidBookings = relevantBookings.filter(b => ['escrow', 'released', 'paid'].includes(b.paymentStatus));
+    const pendingBookings = relevantBookings.filter(b => !['escrow', 'released', 'paid'].includes(b.paymentStatus));
 
     const displayBookings = activeTab === 'paid' ? paidBookings : pendingBookings;
 

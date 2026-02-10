@@ -71,11 +71,11 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                             <h2 className="text-3xl font-bold text-gray-900 mb-1">Invoice</h2>
                             <p className="text-gray-500">Date: {invoiceDate}</p>
                         </div>
-                        <div className={`px-4 py-1.5 rounded-full font-bold uppercase tracking-wide flex items-center text-sm border ${['escrow', 'released'].includes(booking.paymentStatus)
+                        <div className={`px-4 py-1.5 rounded-full font-bold uppercase tracking-wide flex items-center text-sm border ${['escrow', 'released', 'paid'].includes(booking.paymentStatus)
                             ? 'bg-green-100 text-green-700 border-green-200'
                             : 'bg-amber-100 text-amber-700 border-amber-200'
                             }`}>
-                            {['escrow', 'released'].includes(booking.paymentStatus) ? (
+                            {['escrow', 'released', 'paid'].includes(booking.paymentStatus) ? (
                                 <>
                                     <CheckCircle size={16} className="mr-1.5" /> Paid
                                 </>

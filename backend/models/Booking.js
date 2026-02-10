@@ -76,10 +76,11 @@ const bookingSchema = new mongoose.Schema({
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'escrow', 'released', 'refunded', 'failed'],
+        enum: ['pending', 'escrow', 'released', 'refunded', 'failed', 'paid'],
         default: 'pending'
     },
     escrowTransactionId: String,
+    transactionId: String,
     finalPrice: Number, // Agreed price after negotiation
     notes: String,
     createdAt: {

@@ -38,6 +38,8 @@ exports.processPayment = async (req, res) => {
         // Mock Success Logic
         const transactionId = 'TXN_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
+        // Update to 'paid' (direct payment) or 'escrow' (if we wanted to simulate escrow)
+        // For this flow, we'll use 'paid' as it's a direct checkout.
         booking.paymentStatus = 'paid';
         booking.transactionId = transactionId;
 

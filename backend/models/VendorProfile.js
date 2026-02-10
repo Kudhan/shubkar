@@ -44,6 +44,7 @@ const vendorProfileSchema = new mongoose.Schema({
         facebook: String,
         youtube: String
     },
+    blockedDates: [Date], // Dates where vendor is unavailable
     bookingPolicy: {
         advancePercentage: Number, // e.g., 50%
         cancellationRules: String

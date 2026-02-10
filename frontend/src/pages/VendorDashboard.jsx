@@ -113,17 +113,22 @@ const VendorDashboard = () => {
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                     <StatCard
-                        title="Total Revenue (Est)"
-                        value={`₹${bookings.filter(b => b.status === 'confirmed').reduce((sum, b) => sum + (b.finalPrice || b.pricingDetails?.grandTotal || b.negotiation?.currentOffer?.price || 0), 0).toLocaleString()}`}
+                        title="Total Earnings"
+                        value={`₹${bookings.filter(b => (b.status === 'confirmed' || b.status === 'completed') && new Date(b.date) < new Date().setHours(0, 0, 0, 0)).reduce((sum, b) => sum + (b.finalPrice || b.pricingDetails?.grandTotal || 0), 0).toLocaleString()}`}
                         icon={DollarSign}
                         color="bg-emerald-50 text-emerald-600"
-                        trend="+12%"
+                    />
+                    <StatCard
+                        title="Projected Revenue"
+                        value={`₹${bookings.filter(b => b.status === 'confirmed' && new Date(b.date) >= new Date().setHours(0, 0, 0, 0)).reduce((sum, b) => sum + (b.finalPrice || b.pricingDetails?.grandTotal || 0), 0).toLocaleString()}`}
+                        icon={TrendingUp}
+                        color="bg-indigo-50 text-indigo-600"
                     />
                     <StatCard
                         title="Active Bookings"
-                        value={bookings.filter(b => b.status === 'confirmed' || b.status === 'negotiation').length}
+                        value={bookings.filter(b => (b.status === 'confirmed' || b.status === 'negotiation') && new Date(b.date) >= new Date().setHours(0, 0, 0, 0)).length}
                         icon={Calendar}
                         color="bg-blue-50 text-blue-600"
                     />

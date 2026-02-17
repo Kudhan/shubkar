@@ -51,6 +51,20 @@ exports.createBooking = async (req, res) => {
             });
         }
 
+        // Check Blocked Dates
+        const requestedDate = new Date(date || event.date.startDate);
+        const isBlocked = vendor.blockedDates.some(blockedDate => {
+            const bDate = new Date(blockedDate);
+            return bDate.toISOString().split('T')[0] === requestedDate.toISOString().split('T')[0];
+        });
+
+        if (isBlocked) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Vendor is not available on this date'
+            });
+        }
+
         let finalPrice = price; // Default to manual price (Legacy/Fallback)
         let pricingDetails = {};
         let selectedPlan = null;

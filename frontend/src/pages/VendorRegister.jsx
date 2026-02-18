@@ -4,9 +4,11 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import {
     User, Mail, Lock, Briefcase, MapPin, Globe, Users, Award,
-    ChevronRight, CheckCircle, Loader, Instagram, Facebook, Youtube,
+    ChevronRight, CheckCircle, Instagram, Facebook, Youtube,
     DollarSign, BookOpen, Plus, X
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from '../components/ui/Spinner';
 
 const VendorRegister = () => {
     const navigate = useNavigate();
@@ -111,10 +113,13 @@ const VendorRegister = () => {
             const res = await api.post('/auth/register', payload);
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', JSON.stringify(res.data.data.user));
+            toast.success("Welcome to SHUBAKAR! Your vendor account is created.");
             navigate('/vendor/dashboard');
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || 'Registration failed.');
+            const msg = err.response?.data?.message || 'Registration failed.';
+            setError(msg);
+            toast.error(msg);
             setLoading(false);
         }
     };
@@ -178,11 +183,7 @@ const VendorRegister = () => {
 
                     {/* Form Area */}
                     <div className="p-8 lg:w-3/4 bg-white flex flex-col">
-                        {error && (
-                            <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-200 flex items-center">
-                                <X size={16} className="mr-2" /> {error}
-                            </div>
-                        )}
+                        {/* Error alert removed/minimized as we use toast, keeping for persistent view if needed */}
 
                         <form onSubmit={step === 4 ? handleSubmit : nextStep} className="flex-grow flex flex-col">
 
@@ -250,8 +251,8 @@ const VendorRegister = () => {
                                                             key={svc} type="button"
                                                             onClick={() => toggleService(svc)}
                                                             className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border ${formData.services.includes(svc)
-                                                                    ? 'bg-brand-primary text-white border-brand-primary shadow-lg'
-                                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-brand-secondary'
+                                                                ? 'bg-brand-primary text-white border-brand-primary shadow-lg'
+                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-brand-secondary'
                                                                 }`}>
                                                             {svc}
                                                         </button>
@@ -397,7 +398,7 @@ const VendorRegister = () => {
                                 ) : <div></div>}
 
                                 <button type="submit" disabled={loading} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 flex items-center">
-                                    {loading ? <Loader className="animate-spin" /> : step === 4 ? 'Complete Registration' : <>Next Step <ChevronRight size={18} className="ml-1" /></>}
+                                    {loading ? <Spinner className="text-white" /> : step === 4 ? 'Complete Registration' : <>Next Step <ChevronRight size={18} className="ml-1" /></>}
                                 </button>
                             </div>
 

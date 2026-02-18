@@ -22,7 +22,7 @@ const VendorDetails = () => {
                 setLoading(true);
                 // Assuming standard REST endpoint. If this fails, we might need to adjust based on backend.
                 // Based on VendorSearch, we likely need a public public endpoint.
-                const res = await api.get(`/vendors/${id}`);
+                const res = await api.get(`/vendors/details/${id}`);
                 setVendor(res.data.data.vendor);
             } catch (err) {
                 console.error("Failed to fetch vendor details", err);
@@ -164,7 +164,11 @@ const VendorDetails = () => {
                                     <div className="flex items-center gap-3 w-full md:w-auto">
                                         <div className="text-right hidden md:block mr-2">
                                             <p className="text-xs text-gray-500 font-bold uppercase">Starting From</p>
-                                            <p className="text-xl font-bold text-gray-900">₹{vendor.priceRange?.min?.toLocaleString() || "15,000"}</p>
+                                            <p className="text-xl font-bold text-gray-900">
+                                                {vendor.priceRange?.min > 0
+                                                    ? `₹${vendor.priceRange.min.toLocaleString()}`
+                                                    : "Ask for Quote"}
+                                            </p>
                                         </div>
                                         <button
                                             onClick={() => setIsBookingOpen(true)}

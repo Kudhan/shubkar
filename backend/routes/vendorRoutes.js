@@ -7,6 +7,7 @@ const router = express.Router();
 // Public Routes
 router.get('/search', vendorController.searchVendors);
 router.get('/events/:eventId', vendorController.getVendorsForEvent);
+router.get('/details/:id', vendorController.getPublicVendorDetails);
 
 // Protected Vendor Routes
 router.use(authMiddleware.protect);

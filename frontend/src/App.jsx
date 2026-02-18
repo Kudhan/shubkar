@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
@@ -27,6 +28,36 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#333',
+              color: '#fff',
+            },
+            success: {
+              style: {
+                background: '#10B981', // green-500
+                color: 'white',
+              },
+              iconTheme: {
+                primary: 'white',
+                secondary: '#10B981',
+              },
+            },
+            error: {
+              style: {
+                background: '#EF4444', // red-500
+                color: 'white',
+              },
+              iconTheme: {
+                primary: 'white',
+                secondary: '#EF4444',
+              },
+            },
+          }}
+        />
         <Routes>
           {/* Public Routes (Redirect if logged in) */}
           <Route element={<PublicRoute />}>

@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Loader } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from '../components/ui/Spinner';
 
 const Login = () => {
     const { login } = useAuth();
@@ -22,6 +24,7 @@ const Login = () => {
 
             // Use context login
             login(user, res.data.token);
+            toast.success(`Welcome back, ${user.name}!`);
 
             if (user.role === 'admin' || user.role === 'superadmin') {
                 navigate('/admin');
@@ -32,7 +35,9 @@ const Login = () => {
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+            const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+            toast.error(msg);
+            setError(msg); // Keep setting error for fallback or accessibility if needed, or remove if fully relying on toast
         } finally {
             setLoading(false);
         }
@@ -69,11 +74,7 @@ const Login = () => {
                     <h2 className="text-4xl font-bold text-gray-900 mb-2 font-secondary">Sign In</h2>
                     <p className="text-gray-500 mb-10">Access your personalized dashboard.</p>
 
-                    {error && (
-                        <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded text-sm flex items-center">
-                            <span className="mr-2">⚠️</span> {error}
-                        </div>
-                    )}
+                    {/* Error alert removed in favor of toast, but keeping consistent layout */}
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2">
@@ -120,7 +121,7 @@ const Login = () => {
                         >
                             {loading ? (
                                 <>
-                                    <Loader className="animate-spin mr-2" size={20} />
+                                    <Spinner size={20} className="mr-2 text-white" />
                                     Signing in...
                                 </>
                             ) : (

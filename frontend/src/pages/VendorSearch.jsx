@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { Search, MapPin, Filter, Star, Heart, ArrowRight } from 'lucide-react';
+import Skeleton from '../components/ui/Skeleton';
 import { Link } from 'react-router-dom';
 import BookingModal from '../components/BookingModal';
 
@@ -144,7 +145,24 @@ const VendorSearch = () => {
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {[1, 2, 3, 4, 5, 6].map(i => (
-                                    <div key={i} className="bg-white rounded-2xl h-80 animate-pulse border border-gray-100"></div>
+                                    <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[26rem]">
+                                        <Skeleton className="h-48 w-full" />
+                                        <div className="p-5 flex-1 flex flex-col space-y-3">
+                                            <div className="flex justify-between">
+                                                <Skeleton className="h-6 w-3/4" />
+                                                <Skeleton className="h-6 w-12" />
+                                            </div>
+                                            <Skeleton className="h-4 w-1/2" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <div className="pt-4 mt-auto flex justify-between items-center">
+                                                <div className="space-y-1">
+                                                    <Skeleton className="h-3 w-16" />
+                                                    <Skeleton className="h-5 w-20" />
+                                                </div>
+                                                <Skeleton className="h-10 w-10 rounded-full" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         ) : (

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Save, AlertCircle, CheckCircle, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from './ui/Spinner';
 
 const VendorProfileSettings = () => {
     const [formData, setFormData] = useState({
@@ -18,7 +20,6 @@ const VendorProfileSettings = () => {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
     const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
 
     useEffect(() => {
@@ -65,7 +66,6 @@ const VendorProfileSettings = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         try {
             const payload = {
@@ -77,9 +77,9 @@ const VendorProfileSettings = () => {
             };
 
             await api.patch('/vendors/profile', payload);
-            setMessage({ type: 'success', text: 'Profile updated successfully!' });
+            toast.success('Profile updated successfully!');
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update profile' });
+            toast.error(err.response?.data?.message || 'Failed to update profile');
         } finally {
             setSaving(false);
         }
@@ -95,12 +95,6 @@ const VendorProfileSettings = () => {
             </div>
 
             <div className="p-8">
-                {message.text && (
-                    <div className={`p-4 rounded-xl mb-6 flex items-center ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                        {message.type === 'success' ? <CheckCircle size={20} className="mr-2" /> : <AlertCircle size={20} className="mr-2" />}
-                        {message.text}
-                    </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -254,7 +248,7 @@ const VendorProfileSettings = () => {
                             disabled={saving}
                             className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-all flex items-center justify-center disabled:opacity-70"
                         >
-                            <Save size={18} className="mr-2" /> {saving ? 'Saving...' : 'Save Profile'}
+                            <Save size={18} className="mr-2" /> {saving ? <><Spinner size={18} className="mr-2 text-white" /> Saving...</> : 'Save Profile'}
                         </button>
                     </div>
 

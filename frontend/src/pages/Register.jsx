@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { User, Mail, Lock, ArrowRight, Loader, Star } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from '../components/ui/Spinner';
 
 const Register = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -17,10 +19,13 @@ const Register = () => {
             const res = await api.post('/auth/register', { ...formData, role: 'customer' });
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', JSON.stringify(res.data.data.user));
+            toast.success("Account created successfully!");
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+            const msg = err.response?.data?.message || 'Registration failed. Please try again.';
+            toast.error(msg);
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -65,11 +70,7 @@ const Register = () => {
                     <h2 className="text-4xl font-bold text-gray-900 mb-2 font-secondary">Create Account</h2>
                     <p className="text-gray-500 mb-10">Get started with your free customer account.</p>
 
-                    {error && (
-                        <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded text-sm flex items-center">
-                            <span className="mr-2">⚠️</span> {error}
-                        </div>
-                    )}
+                    {/* Error alert removed in favor of toast */}
 
                     <form className="space-y-5" onSubmit={handleSubmit}>
                         <div>
@@ -130,7 +131,7 @@ const Register = () => {
                         >
                             {loading ? (
                                 <>
-                                    <Loader className="animate-spin mr-2" size={20} />
+                                    <Spinner size={20} className="mr-2 text-white" />
                                     Creating Account...
                                 </>
                             ) : (

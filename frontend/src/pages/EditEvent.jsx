@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { Save, ArrowLeft, Calendar, MapPin, Users, DollarSign, AlertTriangle, Lock } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from '../components/ui/Spinner';
 
 const EditEvent = () => {
     const { id } = useParams();
@@ -30,7 +32,7 @@ const EditEvent = () => {
 
                 // Redirect if readonly
                 if (ev.status === 'completed' || ev.status === 'cancelled') {
-                    alert(`Event is ${ev.status} and cannot be edited.`);
+                    toast.error(`Event is ${ev.status} and cannot be edited.`);
                     navigate(`/events/${id}`);
                     return;
                 }
@@ -47,7 +49,7 @@ const EditEvent = () => {
                 });
             } catch (err) {
                 console.error("Failed to fetch event", err);
-                alert("Failed to load event.");
+                toast.error("Failed to load event.");
                 navigate('/events');
             } finally {
                 setLoading(false);
@@ -69,7 +71,7 @@ const EditEvent = () => {
 
         // Frontend Checks
         if (Number(formData.budgetTotal) < committedBudget) {
-            alert(`Budget cannot be less than committed expenses (₹${committedBudget})`);
+            toast.error(`Budget cannot be less than committed expenses (₹${committedBudget})`);
             return;
         }
 
@@ -100,17 +102,21 @@ const EditEvent = () => {
             };
 
             await api.patch(`/events/${id}`, payload);
-            alert("Event updated successfully!");
+            toast.success("Event updated successfully!");
             navigate(`/events/${id}`);
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.message || "Failed to update event.");
+            toast.error(err.response?.data?.message || "Failed to update event.");
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <Spinner size={40} className="text-brand-primary" />
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
@@ -279,7 +285,7 @@ const EditEvent = () => {
                             disabled={saving}
                             className="px-8 py-3 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-primary/90 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:translate-y-0 flex items-center"
                         >
-                            <Save size={20} className="mr-2" />
+                            {saving ? <Spinner size={20} className="mr-2 text-white" /> : <Save size={20} className="mr-2" />}
                             {saving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>

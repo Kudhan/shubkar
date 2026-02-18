@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, CheckCircle, XCircle, MessageSquare, IndianRupee, Clock } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from './ui/Spinner';
 import api from '../services/api';
 
 const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
@@ -37,7 +39,7 @@ const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
             onClose(); // Close or maybe just refresh local state? For now close.
         } catch (err) {
             console.error("Failed to send offer", err);
-            alert("Failed to send offer");
+            toast.error("Failed to send offer");
         } finally {
             setLoading(false);
         }
@@ -52,7 +54,7 @@ const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
             onClose();
         } catch (err) {
             console.error("Failed to accept", err);
-            alert("Failed to accept booking");
+            toast.error("Failed to accept booking");
         } finally {
             setLoading(false);
         }
@@ -67,7 +69,7 @@ const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
             onClose();
         } catch (err) {
             console.error("Failed to reject", err);
-            alert("Failed to reject booking");
+            toast.error("Failed to reject booking");
         } finally {
             setLoading(false);
         }
@@ -205,9 +207,9 @@ const NegotiationModal = ({ booking, onClose, onUpdate, userRole }) => {
                                         <button
                                             type="submit"
                                             disabled={loading || !isMyTurn}
-                                            className="px-6 bg-brand-primary text-white rounded-xl hover:bg-brand-secondary transition-colors"
+                                            className="px-6 bg-brand-primary text-white rounded-xl hover:bg-brand-secondary transition-colors flex items-center justify-center"
                                         >
-                                            <Send size={20} />
+                                            {loading ? <Spinner className="text-white" size={20} /> : <Send size={20} />}
                                         </button>
                                     </div>
                                 </form>

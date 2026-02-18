@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Calendar, MapPin, Users, DollarSign, Type, ArrowRight, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from '../components/ui/Spinner';
 
 const CreateEvent = () => {
     const navigate = useNavigate();
@@ -59,7 +61,7 @@ const CreateEvent = () => {
             }
         } catch (err) {
             console.error(err);
-            alert('Failed to create event: ' + (err.response?.data?.message || err.message));
+            toast.error('Failed to create event: ' + (err.response?.data?.message || err.message));
         } finally {
             setLoading(false);
         }
@@ -117,8 +119,8 @@ const CreateEvent = () => {
                                                 type="button"
                                                 onClick={() => handleChange('eventType', type)}
                                                 className={`py-3 px-4 rounded-xl text-sm font-medium border transition-all ${formData.eventType === type
-                                                        ? 'bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/25'
-                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-brand-primary/50'
+                                                    ? 'bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/25'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-brand-primary/50'
                                                     }`}
                                             >
                                                 {type}
@@ -249,7 +251,7 @@ const CreateEvent = () => {
                                         disabled={loading}
                                         className="flex items-center px-8 py-3 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-primary/90 transition-all shadow-lg shadow-brand-primary/30"
                                     >
-                                        {loading ? 'Creating...' : 'Create Event'} <Check size={18} className="ml-2" />
+                                        {loading ? <><Spinner className="mr-2 text-white" /> Creating...</> : <>{'Create Event'} <Check size={18} className="ml-2" /></>}
                                     </button>
                                 </div>
                             </div>

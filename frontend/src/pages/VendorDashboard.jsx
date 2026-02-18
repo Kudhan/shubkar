@@ -9,6 +9,7 @@ import VendorReviews from '../components/VendorReviews';
 import VendorInvoices from '../components/VendorInvoices';
 import VendorCalendar from '../components/VendorCalendar';
 import { Calendar, Check, X, MessageSquare, Clock, TrendingUp, Users, DollarSign, Layout, Settings, Briefcase, Grid, FileText, Star, Lock } from 'lucide-react';
+import Skeleton from '../components/ui/Skeleton';
 
 const VendorDashboard = () => {
     const [bookings, setBookings] = useState([]);
@@ -172,7 +173,26 @@ const VendorDashboard = () => {
 
                         <div className="divide-y divide-gray-100">
                             {loading ? (
-                                <div className="p-12 text-center text-gray-500">Loading requests...</div>
+                                <div className="divide-y divide-gray-100">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="p-6">
+                                            <div className="flex flex-col md:flex-row gap-6">
+                                                <Skeleton className="w-16 h-16 rounded-xl shrink-0" />
+                                                <div className="flex-1 space-y-3">
+                                                    <div className="flex justify-between">
+                                                        <Skeleton className="h-6 w-48" />
+                                                        <Skeleton className="h-6 w-24" />
+                                                    </div>
+                                                    <Skeleton className="h-4 w-64" />
+                                                    <div className="flex justify-between pt-4">
+                                                        <Skeleton className="h-4 w-32" />
+                                                        <Skeleton className="h-10 w-32 rounded-xl" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : bookings.length === 0 ? (
                                 <div className="p-16 text-center">
                                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">

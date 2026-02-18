@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, CheckCircle, X, Package } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from './ui/Spinner';
 import api from '../services/api';
 
 const ServicePlanManager = () => {
@@ -80,9 +82,10 @@ const ServicePlanManager = () => {
             }
 
             await fetchPlans(); // Refresh list
+            toast.success("Plan saved successfully!");
             handleCancel();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to save plan');
+            toast.error(error.response?.data?.message || 'Failed to save plan');
         }
     };
 
@@ -91,9 +94,10 @@ const ServicePlanManager = () => {
         try {
             await api.delete(`/service-plans/${id}`);
             setPlans(plans.filter(p => p._id !== id));
+            toast.success("Plan deleted successfully");
         } catch (error) {
             console.error(error);
-            alert("Failed to delete plan");
+            toast.error("Failed to delete plan");
         }
     };
 

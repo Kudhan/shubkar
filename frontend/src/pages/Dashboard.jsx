@@ -4,6 +4,7 @@ import {
     Calendar, Search, Zap, Clock, CheckCircle, MessageSquare,
     IndianRupee, Star, MapPin, ChevronRight
 } from 'lucide-react';
+import Skeleton from '../components/ui/Skeleton';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -184,7 +185,21 @@ const Dashboard = () => {
 
                                 <div className="space-y-4">
                                     {loading ? (
-                                        <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-100">Loading...</div>
+                                        <div className="space-y-4">
+                                            {[1, 2, 3].map((i) => (
+                                                <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-5 items-center">
+                                                    <Skeleton className="w-16 h-16 rounded-xl shrink-0" />
+                                                    <div className="flex-1 w-full space-y-2">
+                                                        <div className="flex justify-between w-full">
+                                                            <Skeleton className="h-6 w-32" />
+                                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                                        </div>
+                                                        <Skeleton className="h-4 w-48" />
+                                                        <Skeleton className="h-3 w-24" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     ) : bookings.length === 0 ? (
                                         <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 border-dashed">
                                             <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">

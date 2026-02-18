@@ -284,6 +284,9 @@ exports.rejectBooking = async (req, res) => {
 // Get Bookings (For Customer or Vendor)
 exports.getBookings = async (req, res) => {
     try {
+        console.log("GET BOOKINGS REQUEST STARTED");
+        console.log("User Role:", req.user.role);
+        console.log("User ID:", req.user.id);
         let query = {};
 
         // 1. Admin/Super Admin
@@ -301,11 +304,13 @@ exports.getBookings = async (req, res) => {
             query.customer = req.user.id;
         }
         // 3. Vendor
+        // 3. Vendor
         else if (req.user.role === 'vendor') {
-            // Find bookings where vendor matches user's profile
-            const user = await req.user.populate('vendorProfile');
-            if (req.user.vendorProfile) {
-                query.vendor = req.user.vendorProfile;
+            const VendorProfile = require('../models/VendorProfile');
+            const profile = await VendorProfile.findOne({ user: req.user.id });
+
+            if (profile) {
+                query.vendor = profile._id;
             } else {
                 return res.status(400).json({ status: 'fail', message: 'Vendor profile not found' });
             }

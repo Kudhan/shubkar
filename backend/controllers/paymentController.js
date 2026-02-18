@@ -5,7 +5,8 @@ const Transaction = require('../models/Transaction');
 exports.processPayment = async (req, res) => {
     console.log("--------------------------------------------------");
     console.log("PROCESSING MOCK PAYMENT - START");
-    console.log("Timestamp:", new Date().toISOString());
+    const timestamp = new Date().toISOString();
+    console.log("Timestamp:", timestamp);
     console.log("Request Body:", JSON.stringify(req.body, null, 2));
 
     try {
@@ -19,10 +20,11 @@ exports.processPayment = async (req, res) => {
         // Validate Booking
         let booking;
         try {
+            console.log("🔍 Finding booking:", bookingId);
             booking = await Booking.findById(bookingId);
         } catch (dboErr) {
             console.error("❌ Database Error finding booking:", dboErr);
-            return res.status(400).json({ status: 'fail', message: 'Invalid booking ID format' });
+            return res.status(400).json({ status: 'fail', message: 'Invalid booking ID format or DB Error' });
         }
 
         if (!booking) {
@@ -35,22 +37,13 @@ exports.processPayment = async (req, res) => {
         console.log("   Payment Status:", booking.paymentStatus);
 
         // Simulate Processing Delay
+        console.log("⏳ Simulating delay...");
         await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log("⏳ Delay finished.");
 
         // Mock Success Logic
         const transactionId = 'TXN_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         console.log("💳 Generated Transaction ID:", transactionId);
-
-        // Update to 'paid'
-        booking.paymentStatus = 'paid';
-        booking.transactionId = transactionId;
-
-        // If booking was in negotiation/inquiry, confirm it now
-        // BUT prioritize 'confirmed' if it's not cancelled/completed
-        if (booking.status !== 'completed' && booking.status !== 'cancelled') {
-            console.log("🔄 Updating status to 'confirmed'");
-            booking.status = 'confirmed';
-        }
 
         // Ensure final price is set and is a Number
         let finalAmount = amount;
@@ -63,19 +56,51 @@ exports.processPayment = async (req, res) => {
             finalAmount = 0;
         }
 
-        if (!booking.finalPrice) {
-            // Need to set it for the record
-            booking.finalPrice = Number(finalAmount);
+        // Create Transaction Record
+        try {
+            console.log("📝 Creating Transaction record...");
+            const transaction = await Transaction.create({
+                booking: booking._id,
+                amount: finalAmount,
+                gatewayTransactionId: transactionId,
+                paymentMethod: paymentMethod || 'mock_gateway',
+                status: 'released', // Direct release for mock
+                releasedAt: new Date()
+            });
+            console.log("✅ Transaction created:", transaction._id);
+        } catch (txErr) {
+            console.error("❌ Error creating transaction:", txErr);
+            // Continue? or fail? Fails safe to continue or return error?
+            // If transaction fails, we probably shouldn't update booking.
+            return res.status(500).json({ status: 'error', message: 'Failed to create transaction record', details: txErr.message });
         }
 
-        // --- SPECIFIC SAVE ATTEMPT ---
+        // Construct Update Object
+        const updateData = {
+            paymentStatus: 'paid',
+            transactionId: transactionId,
+        };
+
+        if (!booking.finalPrice) {
+            updateData.finalPrice = Number(finalAmount);
+        }
+
+        // If booking was in negotiation/inquiry, confirm it now
+        if (booking.status !== 'completed' && booking.status !== 'cancelled') {
+            console.log("🔄 Updating status to 'confirmed'");
+            updateData.status = 'confirmed';
+        }
+
+        // --- UPDATE WITH findByIdAndUpdate ---
         try {
-            console.log("💾 Attempting to save booking updates...");
-            await booking.save();
-            console.log("✅ Booking saved successfully!");
+            console.log("💾 Attempting to update booking with ID:", bookingId);
+            console.log("💾 Update Data:", JSON.stringify(updateData, null, 2));
+
+            // modify validation to false or just use findByIdAndUpdate which defaults to no validation for updates unless specified
+            await Booking.findByIdAndUpdate(bookingId, updateData, { runValidators: false });
+            console.log("✅ Booking updated successfully!");
         } catch (saveError) {
-            console.error("❌ CRITICAL: Failed to save booking:", saveError);
-            // Return 500 but don't crash main process if possible, though express catches async errors usually
+            console.error("❌ CRITICAL: Failed to update booking:", saveError);
             return res.status(500).json({
                 status: 'error',
                 message: 'Failed to update booking status in database',
@@ -86,7 +111,7 @@ exports.processPayment = async (req, res) => {
         console.log("PAYMENT PROCESSED SUCCESSFULLY");
         console.log("--------------------------------------------------");
 
-        res.status(200).json({
+        return res.status(200).json({
             status: 'success',
             data: {
                 paymentStatus: 'paid',
@@ -99,7 +124,9 @@ exports.processPayment = async (req, res) => {
     } catch (err) {
         console.error("❌ CRITICAL UNHANDLED PAYMENT ERROR:", err);
         console.log("--------------------------------------------------");
-        res.status(500).json({ status: 'error', message: 'Internal Payment Processing Error', details: err.message });
+        if (!res.headersSent) {
+            return res.status(500).json({ status: 'error', message: 'Internal Payment Processing Error', details: err.message });
+        }
     }
 };
 

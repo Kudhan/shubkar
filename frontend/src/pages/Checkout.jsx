@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { CreditCard, Lock, ShieldCheck, Loader, CheckCircle, Smartphone, Globe, Wallet } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Checkout = () => {
     const { state } = useLocation();
@@ -59,11 +60,18 @@ const Checkout = () => {
                 paymentMethod: paymentMethod
             });
             setSuccess(true);
+            toast.success("Payment Successful! Redirecting...");
             setTimeout(() => {
                 navigate('/dashboard');
             }, 3000);
         } catch (err) {
-            setError('Payment processing failed. Please try again.');
+            console.error("PAYMENT ERROR:", err);
+            if (err.response) {
+                console.error("Response Data:", err.response.data);
+                console.error("Response Status:", err.response.status);
+            }
+            setError(err.response?.data?.message || 'Payment processing failed. Please try again.');
+            toast.error(err.response?.data?.message || "Payment failed. Please try again.");
             setLoading(false);
         }
     };

@@ -144,6 +144,7 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                     <div className="bg-gray-50 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 border border-gray-100">
                         <div className="text-sm text-gray-500">
                             <p><span className="font-bold text-gray-700">Payment ID:</span> {booking.paymentId || "PAY-" + Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                            <p><span className="font-bold text-gray-700">Payment Mode:</span> {booking.paymentMode || "Online"}</p>
                             <p><span className="font-bold text-gray-700">Paid on:</span> {invoiceDate}</p>
                         </div>
                         <button className="flex items-center gap-2 text-brand-primary font-bold hover:underline print:hidden">

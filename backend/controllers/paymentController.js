@@ -143,6 +143,15 @@ exports.generateInvoice = async (req, res) => {
 
         const amount = booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0;
 
+        // Fetch Transaction Details
+        const transaction = await Transaction.findOne({ booking: bookingId });
+        const paymentMethod = transaction ? transaction.paymentMethod : 'N/A';
+        // Map internal payment codes to readable names (optional, but good for UI)
+        const paymentModeDisplay = paymentMethod === 'upi' ? 'UPI / QR' :
+            paymentMethod === 'card' ? 'Credit/Debit Card' :
+                paymentMethod === 'netbanking' ? 'Net Banking' :
+                    paymentMethod;
+
         const invoice = {
             id: 'INV-' + (booking.transactionId ? booking.transactionId.split('_')[1] : Date.now()),
             date: new Date(),
@@ -150,7 +159,8 @@ exports.generateInvoice = async (req, res) => {
             vendor: booking.vendor?.companyName || "Vendor",
             service: booking.serviceType,
             amount: amount,
-            status: 'PAID'
+            status: 'PAID',
+            paymentMode: paymentModeDisplay
         };
 
         res.status(200).json({ status: 'success', data: { invoice } });

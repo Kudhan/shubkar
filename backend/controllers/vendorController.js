@@ -163,6 +163,27 @@ exports.getVendorsForEvent = async (req, res) => {
     }
 };
 
+exports.getPublicVendorDetails = async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findById(req.params.id).populate('user', 'name');
+
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+
+        if (!vendor.isApproved) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not available' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { vendor }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
 // Admin only: Manage Vendor Lifecycle
 exports.updateVendorStatus = async (req, res) => {
     try {

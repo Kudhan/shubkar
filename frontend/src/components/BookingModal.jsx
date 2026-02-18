@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, MessageSquare, Briefcase, Loader2, CheckCircle2, ChevronDown, Plus, Package } from 'lucide-react';
+import { X, Calendar, MessageSquare, Briefcase, CheckCircle2, ChevronDown, Plus, Package } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Spinner from './ui/Spinner';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import ServicePlanCard from './ServicePlanCard';
@@ -158,7 +160,7 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
         e.preventDefault();
 
         if (!formData.eventId) {
-            alert("Please select an event to link this booking to.");
+            toast.error("Please select an event to link this booking to.");
             return;
         }
 
@@ -184,7 +186,7 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || 'Failed to send booking request.';
-            alert(msg);
+            toast.error(msg);
         } finally {
             setSubmitting(false);
         }
@@ -353,7 +355,7 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
                                 disabled={submitting}
                                 className="w-full py-3.5 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-primary/90 transition-all flex justify-center items-center"
                             >
-                                {submitting ? <Loader2 className="animate-spin mr-2" /> : null}
+                                {submitting ? <Spinner size={20} className="mr-2 text-white" /> : null}
                                 {submitting ? 'Sending Request...' : 'Confirm Request'}
                             </button>
                         </form>

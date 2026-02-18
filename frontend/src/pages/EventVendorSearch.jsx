@@ -184,12 +184,12 @@ const EventVendorSearch = () => {
                                     </p>
 
                                     <div className="flex gap-3">
-                                        <button
-                                            // Link to vendor profile details (if we had that page) or just expand
-                                            className="flex-1 py-2.5 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                                        <Link
+                                            to={`/vendors/${vendor._id}`}
+                                            className="flex-1 py-2.5 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm text-center flex items-center justify-center"
                                         >
                                             View Profile
-                                        </button>
+                                        </Link>
                                         <button
                                             onClick={() => handleBookClick(vendor)}
                                             className="flex-1 py-2.5 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-primary/90 transition-colors shadow-lg shadow-brand-primary/20 text-sm"

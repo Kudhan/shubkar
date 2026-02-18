@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import VendorDashboard from './pages/VendorDashboard';
 import VendorRegister from './pages/VendorRegister';
 import VendorSearch from './pages/VendorSearch';
+import VendorDetails from './pages/VendorDetails';
 import AIPlanEvent from './pages/AIPlanEvent';
 import EventsPage from './pages/EventsPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -74,6 +75,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<CustomerProfile />} />
             <Route path="/vendors" element={<VendorSearch />} />
+            <Route path="/vendors/:id" element={<VendorDetails />} />
             <Route path="/ai-planner" element={<AIPlanEvent />} />
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/checkout" element={<Checkout />} /> {/* Checkout Route */}

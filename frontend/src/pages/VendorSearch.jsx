@@ -223,11 +223,20 @@ const VendorSearch = () => {
                                                     <p className="text-xs text-gray-400 font-semibold uppercase">Starting from</p>
                                                     <p className="font-bold text-gray-900">₹{typeof vendor.priceRange === 'object' ? vendor.priceRange.min?.toLocaleString() : vendor.priceRange || '15,000'}</p>
                                                 </div>
-                                                <button
-                                                    onClick={() => setSelectedVendor(vendor)}
-                                                    className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-900 hover:bg-brand-primary hover:text-white transition-all shadow-sm">
-                                                    <ArrowRight size={20} />
-                                                </button>
+                                                <div className="flex gap-2">
+                                                    <Link
+                                                        to={`/vendors/${vendor._id}`}
+                                                        className="px-4 py-2 rounded-xl bg-gray-50 text-gray-900 font-bold hover:bg-gray-100 transition-colors text-sm"
+                                                    >
+                                                        Details
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => setSelectedVendor(vendor)}
+                                                        className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-white hover:bg-black transition-all shadow-lg"
+                                                    >
+                                                        <ArrowRight size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

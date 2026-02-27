@@ -5,15 +5,36 @@ exports.createReview = async (req, res) => {
     try {
         const { vendorId, bookingId, rating, comment } = req.body;
 
-        // 1. Verify Booking (optional but recommended)
-        if (bookingId) {
-            const booking = await Booking.findById(bookingId);
-            if (!booking) {
-                return res.status(404).json({ status: 'fail', message: 'Booking not found' });
-            }
-            if (booking.customer.toString() !== req.user.id) {
-                return res.status(403).json({ status: 'fail', message: 'You are not authorized to review this booking' });
-            }
+        // 1. Verify Booking (mandatory for customer feedback now)
+        if (!bookingId) {
+            return res.status(400).json({ status: 'fail', message: 'A valid booking ID is required to leave a review.' });
+        }
+
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ status: 'fail', message: 'Booking not found' });
+        }
+        
+        if (booking.customer.toString() !== req.user.id) {
+            return res.status(403).json({ status: 'fail', message: 'You are not authorized to review this booking' });
+        }
+
+        // ENFORCE Business Logic: Feedback only after payment is done and date is completed
+        const currentDate = new Date();
+        const bookingDate = new Date(booking.date);
+
+        if (booking.paymentStatus !== 'paid' && booking.paymentStatus !== 'released') {
+            return res.status(400).json({ status: 'fail', message: 'Feedback can only be provided after payments are fully processed.' });
+        }
+
+        if (currentDate <= bookingDate) {
+            return res.status(400).json({ status: 'fail', message: 'Feedback can only be provided after the booking date is completed.' });
+        }
+
+        // Prevent multiple reviews for the same booking
+        const existingReview = await Review.findOne({ booking: bookingId });
+        if (existingReview) {
+            return res.status(400).json({ status: 'fail', message: 'You have already submitted a review for this booking.' });
         }
 
         // 2. Create Review
@@ -38,8 +59,9 @@ exports.createReview = async (req, res) => {
         ]);
 
         if (stats.length > 0) {
+            const mongoose = require('mongoose');
             await mongoose.model('VendorProfile').findByIdAndUpdate(vendorId, {
-                'rating.average': stats[0].avgRating,
+                'rating.average': stats[0].avgRating.toFixed(1),
                 'rating.count': stats[0].nRating
             });
         }
@@ -49,6 +71,46 @@ exports.createReview = async (req, res) => {
             data: { review: newReview }
         });
 
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.checkEligibility = async (req, res) => {
+    try {
+        const { vendorId } = req.params;
+        const customerId = req.user.id;
+        const currentDate = new Date();
+
+        // Find completed bookings for this vendor and customer that are fully paid
+        const eligibleBookings = await Booking.find({
+            vendor: vendorId,
+            customer: customerId,
+            paymentStatus: { $in: ['paid', 'released'] },
+            date: { $lt: currentDate }
+        });
+
+        if (eligibleBookings.length === 0) {
+            return res.status(200).json({
+                status: 'success',
+                data: { isEligible: false, bookings: [] }
+            });
+        }
+
+        // Filter out bookings that already have reviews
+        const eligibleBookingIds = eligibleBookings.map(b => b._id);
+        const existingReviews = await Review.find({ booking: { $in: eligibleBookingIds } });
+        const reviewedBookingIds = existingReviews.map(r => r.booking.toString());
+
+        const finalEligibleBookings = eligibleBookings.filter(b => !reviewedBookingIds.includes(b._id.toString()));
+
+        res.status(200).json({
+            status: 'success',
+            data: { 
+                isEligible: finalEligibleBookings.length > 0,
+                bookings: finalEligibleBookings
+            }
+        });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

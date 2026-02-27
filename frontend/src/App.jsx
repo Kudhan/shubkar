@@ -22,6 +22,7 @@ import EventVendorSearch from './pages/EventVendorSearch'; // Import fixed
 import EditEvent from './pages/EditEvent';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import AIChat from './components/AIChat';
 
 import PublicRoute from './components/PublicRoute';
 
@@ -96,6 +97,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
           </Route>
         </Routes>
+        <AIChat />
       </Router>
     </AuthProvider>
   );

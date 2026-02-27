@@ -6,15 +6,25 @@ import BookingModal from '../components/BookingModal';
 import Skeleton from '../components/ui/Skeleton';
 import { MapPin, Star, Share2, Heart, ArrowLeft, CheckCircle, Mail, Phone, Globe, Calendar, DollarSign, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const VendorDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    
     const [vendor, setVendor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('about'); // about, portfolio, reviews, services
+    
+    // Reviews
+    const [reviews, setReviews] = useState([]);
+    const [isEligible, setIsEligible] = useState(false);
+    const [eligibleBookings, setEligibleBookings] = useState([]);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', bookingId: '' });
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
         const fetchVendorDetails = async () => {
@@ -33,10 +43,51 @@ const VendorDetails = () => {
             }
         };
 
+        const fetchReviewsAndEligibility = async () => {
+            try {
+                // Public fetch reviews
+                const reviewRes = await api.get(`/reviews/vendor/${id}`);
+                setReviews(reviewRes.data.data.reviews);
+
+                // If logged in, see if user can leave a review
+                if (user) {
+                    const eligRes = await api.get(`/reviews/eligibility/${id}`);
+                    if (eligRes.data && eligRes.data.data && eligRes.data.data.isEligible) {
+                        setIsEligible(true);
+                        setEligibleBookings(eligRes.data.data.bookings);
+                        if (eligRes.data.data.bookings.length > 0) {
+                            setReviewForm(prev => ({ ...prev, bookingId: eligRes.data.data.bookings[0]._id }));
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch reviews", err);
+            }
+        };
+
         if (id) {
             fetchVendorDetails();
+            fetchReviewsAndEligibility();
         }
-    }, [id]);
+    }, [id, user]);
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setSubmittingReview(true);
+            const res = await api.post('/reviews', {
+                vendorId: id,
+                ...reviewForm
+            });
+            toast.success("Review submitted successfully!");
+            setReviews([res.data.data.review, ...reviews]);
+            setIsEligible(false); // Only letting them submit one per logic flow for simple UI right now
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to submit review");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     const handleBack = () => {
         navigate(-1);
@@ -274,11 +325,108 @@ const VendorDetails = () => {
                             </div>
                         )}
 
-                        {/* Similar logic for reviews... */}
+                        {/* Reviews */}
                         {activeTab === 'reviews' && (
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm animate-fade-in-up">
-                                <h3 className="text-xl font-bold text-gray-900 mb-6">Client Reviews</h3>
-                                <p className="text-gray-500 italic">Reviews coming soon...</p>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900">Client Reviews</h3>
+                                </div>
+                                
+                                {isEligible && (
+                                    <div className="bg-gray-50 p-6 rounded-2xl mb-8 border border-gray-200">
+                                        <h4 className="font-bold text-gray-900 mb-4">Leave a Review</h4>
+                                        <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Select Completed Booking</label>
+                                                <select 
+                                                    value={reviewForm.bookingId}
+                                                    onChange={(e) => setReviewForm({...reviewForm, bookingId: e.target.value})}
+                                                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-primary outline-none text-sm"
+                                                    required
+                                                >
+                                                    {eligibleBookings.map(b => (
+                                                        <option key={b._id} value={b._id}>
+                                                            {b.serviceType} - {new Date(b.date).toLocaleDateString()}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-gray-500 mt-1">* Only fully paid and completed bookings can be reviewed.</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Rating (1-5)</label>
+                                                <div className="flex gap-2">
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <button 
+                                                            type="button" 
+                                                            key={star} 
+                                                            onClick={() => setReviewForm({...reviewForm, rating: star})}
+                                                            className={`p-1 transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                                                        >
+                                                            <Star className={reviewForm.rating >= star ? 'fill-yellow-500' : ''} size={24} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                                                <textarea 
+                                                    required
+                                                    rows="3"
+                                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-primary outline-none resize-none text-sm"
+                                                    placeholder="Share your experience working with this vendor..."
+                                                    value={reviewForm.comment}
+                                                    onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                                                ></textarea>
+                                            </div>
+                                            <button 
+                                                type="submit" 
+                                                disabled={submittingReview}
+                                                className="px-6 py-2 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-secondary transition-colors"
+                                            >
+                                                {submittingReview ? 'Submitting...' : 'Post Review'}
+                                            </button>
+                                        </form>
+                                    </div>
+                                )}
+
+                                <div className="space-y-6">
+                                    {reviews.length > 0 ? reviews.map(review => (
+                                        <div key={review._id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                                        <span className="font-bold text-gray-500">{review.customer?.name?.charAt(0) || 'U'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-sm text-gray-900">{review.customer?.name || 'Anonymous User'}</h4>
+                                                        <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star key={i} size={14} className={i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-600 text-sm mt-3">{review.comment}</p>
+                                            
+                                            {/* Vendor Reply */}
+                                            {review.reply && (
+                                                <div className="mt-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 ml-12">
+                                                    <p className="text-xs font-bold text-gray-900 mb-1 flex items-center">
+                                                        <span className="w-1.5 h-1.5 bg-brand-primary rounded-full mr-2"></span>
+                                                        Message from {vendor.companyName}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">{review.reply}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )) : (
+                                        <div className="text-center py-8">
+                                            <p className="text-gray-500 italic">No reviews yet for this vendor.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 

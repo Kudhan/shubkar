@@ -10,6 +10,8 @@ router.get('/vendor/:vendorId', reviewController.getVendorReviews);
 // Protected
 router.use(authMiddleware.protect);
 
+router.get('/eligibility/:vendorId', reviewController.checkEligibility);
+
 router.post('/', reviewController.createReview);
 
 // Vendor-specific

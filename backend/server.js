@@ -13,6 +13,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const timelineRoutes = require('./routes/timelineRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 const Message = require('./models/Message');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/timeline', timelineRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/service-plans', require('./routes/servicePlanRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
@@ -97,4 +99,3 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
-// Restart trigger 2

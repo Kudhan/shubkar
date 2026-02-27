@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import api from '../services/api'; // For fetching history
 import { Send, X, MessageSquare } from 'lucide-react';
 
-const ENDPOINT = 'http://localhost:5000';
+const ENDPOINT = import.meta.env.VITE_SOCKET_URL;
 
 const ChatWindow = ({ bookingId, currentUser, onClose }) => {
     const [socket, setSocket] = useState(null);

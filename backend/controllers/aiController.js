@@ -1,44 +1,108 @@
-// Mock AI Controller
-const VendorProfile = require('../models/VendorProfile');
+const { classifyIntent } = require("../services/ai/intentClassifier");
+const { planEvent } = require("../services/ai/eventPlannerService");
+const { recommendVendors } = require("../services/ai/vendorAIService");
+const { determineNavigation } = require("../services/ai/navigationService");
+const aiService = require("../services/ai/groqService");
 
-exports.getVendorRecommendations = async (req, res) => {
-    try {
-        // In a real app, this would call a Python flask service or OpenAI API
-        // For now, simple rule-based matching based on query
-        const { eventType, budget, city } = req.body;
+/**
+ * AI Controller
+ * Orchestrates the flow of the unified AI Chat system.
+ */
+const chat = async (req, res) => {
+  try {
+    const { message, history = [] } = req.body;
 
-        const recommended = await VendorProfile.find({
-            "location.city": city,
-            "priceRange.min": { $lte: budget / 2 } // Heuristic: service shouldn't exceed 50% of budget
-        }).limit(5);
-
-        res.status(200).json({
-            status: 'success',
-            ai_model: 'shubakar-recommend-v1',
-            data: { recommendations: recommended }
-        });
-    } catch (err) {
-        res.status(400).json({ status: 'fail', message: err.message });
+    if (!message) {
+      return res
+        .status(400)
+        .json({ status: "fail", message: "Message is required" });
     }
+
+    // Convert history format if needed
+    const formattedHistory = history.map((h) => ({
+      role: h.role === "user" ? "user" : "assistant",
+      content: h.text || h.content || "",
+    }));
+
+    // 1. Classify Intent
+    const intent = await classifyIntent(message, formattedHistory);
+    console.log(`AI Chat Intent: ${intent}`);
+
+    let aiResponse = {
+      intent,
+      content: null,
+      text: "",
+    };
+
+    // 2. Route based on intent
+    switch (intent) {
+      case "EVENT_PLANNING":
+        aiResponse.content = await planEvent(message, formattedHistory);
+        aiResponse.text = "I've drafted a plan for you!";
+        break;
+
+      case "VENDOR_SEARCH":
+        aiResponse.content = await recommendVendors(message, formattedHistory);
+        aiResponse.text =
+          aiResponse.content.aiAdvice ||
+          "Here are some vendors that match your request.";
+        break;
+
+      case "SITE_NAVIGATION":
+        aiResponse.content = await determineNavigation(message);
+        aiResponse.text = "I can take you exactly where you need to go! Just click the link below.";
+        break;
+
+      case "GENERAL_HELP":
+      default:
+        const prompt = `
+                    You are SHUBAKAR Assistant, a knowledgeable event planner on the "shubakar" platform.
+                    User Message: "${message}"
+
+                    Provide a helpful, polite, and conversational response. Keep it concise, friendly, and under 4 sentences.
+                `;
+        aiResponse.text = await aiService.generateContent(
+          prompt,
+          formattedHistory.slice(-6),
+        );
+        break;
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: aiResponse,
+    });
+  } catch (error) {
+    console.error("AI Controller Error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error in AI service",
+    });
+  }
 };
 
-exports.analyzeRisk = async (req, res) => {
-    try {
-        const { vendorId } = req.body;
-        // Mock risk analysis
-        const riskScore = Math.floor(Math.random() * 100);
-        const riskLevel = riskScore < 20 ? 'Low' : riskScore < 70 ? 'Medium' : 'High';
+/**
+ * BACKWARD COMPATIBILITY: Restoring functions required by adminRoutes
+ */
+const getVendorRecommendations = async (req, res) => {
+  // Legacy support for admin recommendation requests
+  req.body.message = req.body.message || "Recommend some vendors";
+  return chat(req, res);
+};
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                vendorId,
-                riskScore,
-                riskLevel,
-                factors: ['Response Time', 'Cancellation Rate']
-            }
-        });
-    } catch (err) {
-        res.status(400).json({ status: 'fail', message: err.message });
-    }
+const analyzeRisk = async (req, res) => {
+  // Placeholder for budget risk analysis
+  res.status(200).json({
+    status: "success",
+    data: {
+      riskLevel: "LOW",
+      analysis: "Automated risk assessment complete.",
+    },
+  });
+};
+
+module.exports = {
+  chat,
+  getVendorRecommendations,
+  analyzeRisk,
 };

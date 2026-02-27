@@ -12,12 +12,14 @@ import ChatWindow from '../components/ChatWindow';
 import NegotiationModal from '../components/NegotiationModal';
 import InvoiceModal from '../components/InvoiceModal';
 import CustomerInvoices from '../components/CustomerInvoices';
+import CustomerFeedback from '../components/CustomerFeedback';
 
 const Dashboard = () => {
     const { user } = useAuth();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [statusFilter, setStatusFilter] = useState('All');
     const [activeChat, setActiveChat] = useState(null);
     const [activeNegotiation, setActiveNegotiation] = useState(null);
     const [activeInvoice, setActiveInvoice] = useState(null);
@@ -107,6 +109,13 @@ const Dashboard = () => {
                             Payments & Invoices
                             {activeTab === 'payments' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-primary rounded-t-full"></div>}
                         </button>
+                        <button
+                            onClick={() => setActiveTab('feedback')}
+                            className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'feedback' ? 'text-brand-primary' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            Completed & Feedback
+                            {activeTab === 'feedback' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-primary rounded-t-full"></div>}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -178,9 +187,23 @@ const Dashboard = () => {
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Left: Bookings */}
                             <div className="lg:w-2/3">
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                     <h2 className="text-xl font-bold text-gray-900 font-secondary">Recent Bookings</h2>
-                                    <Link to="/vendors" className="text-brand-primary text-sm font-semibold hover:underline">Browse All Vendors</Link>
+                                    <div className="flex items-center gap-3">
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-primary"
+                                        >
+                                            <option value="All">All Statuses</option>
+                                            <option value="inquiry">Inquiry</option>
+                                            <option value="negotiation">Negotiating</option>
+                                            <option value="confirmed">Confirmed</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                        <Link to="/vendors" className="text-brand-primary text-sm font-semibold hover:underline hidden sm:block">Browse All</Link>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4">
@@ -212,7 +235,15 @@ const Dashboard = () => {
                                             </Link>
                                         </div>
                                     ) : (
-                                        bookings.map((booking) => (
+                                        bookings
+                                            .filter(booking => statusFilter === 'All' || booking.status === statusFilter)
+                                            .length === 0 ? (
+                                                <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-100 italic text-gray-500">
+                                                    No bookings found for the selected status filter.
+                                                </div>
+                                            ) : bookings
+                                            .filter(booking => statusFilter === 'All' || booking.status === statusFilter)
+                                            .map((booking) => (
                                             <div key={booking._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row gap-5 items-start sm:items-center group">
                                                 {/* Vendor Avatar Stub */}
                                                 <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
@@ -370,8 +401,10 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </>
-                ) : (
+                ) : activeTab === 'payments' ? (
                     <CustomerInvoices bookings={bookings} user={user} />
+                ) : (
+                    <CustomerFeedback bookings={bookings} />
                 )}
             </div>
 

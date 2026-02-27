@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
-import axios from 'axios';
+import api from '../services/api';
 import { Send, Zap, User, Bot, Sparkles, Loader } from 'lucide-react';
 
 const AIPlanEvent = () => {
@@ -31,21 +31,23 @@ const AIPlanEvent = () => {
         setMessages(prev => [...prev, userMsg]);
 
         try {
-            const res = await axios.post('http://localhost:5001/predict', {
-                ...formData,
-                budget: parseFloat(formData.budget),
-                guests: parseInt(formData.guests)
-            });
+            // Use existing Node.js api setup
+            const prompt = `Plan a ${formData.event_type} for ${formData.guests} guests with a budget of ₹${formData.budget}. Priorities: ${formData.priority_1}, ${formData.priority_2}, ${formData.priority_3}.`;
+            const res = await api.post('/ai/chat', { message: prompt, history: [] });
+            
+            const aiData = res.data.data;
 
-            setResult(res.data);
-
-            // Add AI Response
-            const aiMsg = { role: 'ai', content: "I've analyzed your requirements! Here is a recommended budget distribution to make your event perfect." };
-            setMessages(prev => [...prev, aiMsg]);
+            if (aiData.intent === 'EVENT_PLANNING' && aiData.content) {
+                setResult(aiData.content);
+                const aiMsg = { role: 'ai', content: aiData.text || "I've analyzed your requirements! Here is a recommended budget distribution to make your event perfect." };
+                setMessages(prev => [...prev, aiMsg]);
+            } else {
+                setMessages(prev => [...prev, { role: 'ai', content: aiData.text || "I couldn't generate a specific budget plan for that request, but I'm here to help!" }]);
+            }
 
         } catch (err) {
             console.error(err);
-            setMessages(prev => [...prev, { role: 'ai', content: "Sorry, I encountered an error connecting to the AI service. Please make sure the Python server is running." }]);
+            setMessages(prev => [...prev, { role: 'ai', content: "Sorry, I encountered an error connecting to my brain. Please try again." }]);
         } finally {
             setLoading(false);
         }
@@ -99,28 +101,34 @@ const AIPlanEvent = () => {
                                         <Bot size={16} />
                                     </div>
                                     <div className="bg-white border border-gray-100 p-6 rounded-2xl rounded-tl-none shadow-sm w-full">
-                                        <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Use of Funds Recommendation</h3>
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">
+                                            {result.eventType} in {result.city}
+                                        </h3>
                                         <div className="space-y-4">
-                                            {Object.entries(result).map(([category, amount]) => (
-                                                category !== 'Total' && (
-                                                    <div key={category}>
-                                                        <div className="flex justify-between text-sm mb-1">
-                                                            <span className="font-medium text-gray-600">{category}</span>
-                                                            <span className="font-bold text-gray-900">₹{Math.round(amount).toLocaleString()}</span>
-                                                        </div>
-                                                        <div className="w-full bg-gray-100 rounded-full h-2">
-                                                            <div
-                                                                className="bg-brand-secondary h-2 rounded-full"
-                                                                style={{ width: `${(amount / result.Total) * 100}%` }}
-                                                            ></div>
-                                                        </div>
+                                            {result.budgetBreakdown?.map((item, idx) => (
+                                                <div key={idx}>
+                                                    <div className="flex justify-between text-sm mb-1">
+                                                        <span className="font-medium text-gray-600">{item.category}</span>
+                                                        <span className="font-bold text-gray-900">₹{item.amount?.toLocaleString()}</span>
                                                     </div>
-                                                )
+                                                    <div className="w-full bg-gray-100 rounded-full h-2">
+                                                        <div
+                                                            className="bg-brand-secondary h-2 rounded-full"
+                                                            style={{ width: `${item.percentage}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    {item.note && <p className="text-[10px] text-gray-500 mt-1 italic">{item.note}</p>}
+                                                </div>
                                             ))}
                                             <div className="pt-4 mt-4 border-t border-gray-100 flex justify-between font-bold text-brand-primary">
                                                 <span>Total Estimated Cost</span>
-                                                <span>₹{Math.round(result.Total).toLocaleString()}</span>
+                                                <span>₹{result.totalBudget?.toLocaleString()}</span>
                                             </div>
+                                            {result.summary && (
+                                                <div className="pt-2 text-xs text-gray-600 bg-blue-50 p-2 rounded mt-2 border border-blue-100">
+                                                    {result.summary}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

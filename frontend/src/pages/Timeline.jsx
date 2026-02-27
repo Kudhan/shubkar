@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { Plus, Clock, Trash2, Calendar as CalIcon, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const Timeline = () => {
     const [events, setEvents] = useState([]);
@@ -14,10 +14,7 @@ const Timeline = () => {
     const fetchEvents = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/timeline', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/timeline');
             setEvents(res.data.data.timeline);
             setError(null);
         } catch (err) {
@@ -38,10 +35,7 @@ const Timeline = () => {
 
         try {
             setSubmitting(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/timeline', newEvent, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.post('/timeline', newEvent);
 
             // Optimistic update or just append result
             setEvents([...events, res.data.data.item].sort((a, b) => a.time.localeCompare(b.time)));
@@ -62,10 +56,7 @@ const Timeline = () => {
         setEvents(events.filter(e => e._id !== id));
 
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/timeline/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/timeline/${id}`);
         } catch (err) {
             console.error(err);
             alert('Failed to delete event');
@@ -81,10 +72,7 @@ const Timeline = () => {
         setEvents(updatedEvents);
 
         try {
-            const token = localStorage.getItem('token');
-            await axios.patch(`http://localhost:5000/api/timeline/${id}`, { status: newStatus }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.patch(`/timeline/${id}`, { status: newStatus });
         } catch (err) {
             console.error(err);
             // Revert

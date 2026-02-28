@@ -4,8 +4,10 @@ import api from '../services/api';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Spinner from '../components/ui/Spinner';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
+    const { login } = useAuth();
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,8 +19,9 @@ const Register = () => {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { ...formData, role: 'customer' });
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.data.user));
+            
+            login(res.data.data.user, res.data.token);
+            
             toast.success("Account created successfully!");
             navigate('/dashboard');
         } catch (err) {

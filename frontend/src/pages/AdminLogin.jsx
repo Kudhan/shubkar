@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const AdminLogin = () => {
+    const { login } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -23,8 +25,8 @@ const AdminLogin = () => {
                 return;
             }
 
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(user));
+            // Correctly set state using the context
+            login(user, res.data.token);
 
             // Direct to Admin Dashboard
             navigate('/admin');

@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import {
-    CheckCircle, XCircle, Loader, Shield, Search, Filter, MoreHorizontal,
-    Trash2, Eye, FileText, Activity, X, Save, Package
+    LayoutDashboard, Users, UserCheck, Shield, ChevronRight, CheckCircle, Search, Edit2, Package, Tag, Layers, RefreshCw, X, ShieldCheck, FileText, Download, UserX, AlertCircle, Phone, Globe, Activity, Trash2, Camera, Loader, Eye, Save, XCircle, Filter, MoreHorizontal
 } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [searchText, setSearchText] = useState('');
+    const [fullScreenImage, setFullScreenImage] = useState(null); // Add this for viewing documents
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
 
     const [plans, setPlans] = useState([]);
     const [loadingPlans, setLoadingPlans] = useState(false);
@@ -26,6 +31,44 @@ const AdminDashboard = () => {
     // Edit Form State
     const [editFormData, setEditFormData] = useState({});
     const [newPortfolioUrl, setNewPortfolioUrl] = useState('');
+
+    // GST State
+    const [verifyingGst, setVerifyingGst] = useState(false);
+    const [gstDetails, setGstDetails] = useState(null);
+
+    const handleVerifyGst = async (vendorId) => {
+        setVerifyingGst(true);
+        try {
+            const res = await api.post(`/admin/vendors/${vendorId}/verify-gst`);
+            setGstDetails(res.data.data);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to verify GST');
+        } finally {
+            setVerifyingGst(false);
+        }
+    };
+
+    const handleApproveBackend = async (vendorId) => {
+        try {
+            await api.post(`/admin/vendors/${vendorId}/approve`);
+            setGstDetails(null);
+            setShowDetailsModal(false);
+            fetchVendors();
+        } catch(err) {
+            alert('Approve failed');
+        }
+    };
+
+    const handleRejectBackend = async (vendorId) => {
+        try {
+            await api.post(`/admin/vendors/${vendorId}/reject`);
+            setGstDetails(null);
+            setShowDetailsModal(false);
+            fetchVendors();
+        } catch(err) {
+            alert('Reject failed');
+        }
+    };
 
     const fetchVendors = async () => {
         try {
@@ -121,10 +164,23 @@ const AdminDashboard = () => {
         }
     };
 
-    const filteredVendors = vendors.filter(v =>
-        v.companyName.toLowerCase().includes(searchText.toLowerCase()) ||
-        v.user?.email.toLowerCase().includes(searchText.toLowerCase())
-    );
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
+    const filteredVendors = vendors.filter(v => {
+        const matchSearch = v.companyName.toLowerCase().includes(searchText.toLowerCase()) ||
+                            v.user?.email.toLowerCase().includes(searchText.toLowerCase());
+        const matchStatus = statusFilter === 'ALL' || v.verification_status === statusFilter;
+        return matchSearch && matchStatus;
+    });
+
+    const totalPages = Math.ceil(filteredVendors.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedVendors = filteredVendors.slice(startIndex, startIndex + itemsPerPage);
+
+    // Reset pagination when searching
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchText]);
 
     const filteredPlans = plans.filter(p =>
         p.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -161,28 +217,58 @@ const AdminDashboard = () => {
                             </button>
                         </div>
 
-                        <div className="relative flex-1 md:w-64">
-                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder={`Search ${activeTab === 'vendors' ? 'vendors' : 'plans'}...`}
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 w-full"
-                            />
+                        <div className="flex gap-2">
+                            {activeTab === 'vendors' && (
+                                <select 
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 text-sm font-semibold bg-white text-gray-700"
+                                >
+                                    <option value="ALL">All Status</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="APPROVED">Approved</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+                            )}
+                            <div className="relative flex-1 md:w-64">
+                                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder={`Search ${activeTab === 'vendors' ? 'vendors' : 'plans'}...`}
+                                    value={searchText}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 w-full text-sm"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Document Fullscreen Overlay */}
+                {fullScreenImage && (
+                    <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4">
+                        <button onClick={() => setFullScreenImage(null)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors">
+                            <X size={24} />
+                        </button>
+                        <div className="max-w-5xl max-h-[90vh] flex items-center justify-center w-full h-full relative">
+                            {fullScreenImage.includes('application/pdf') || fullScreenImage.includes('.pdf') ? (
+                                <iframe src={fullScreenImage} title="PDF Viewer" className="w-full h-full bg-white rounded-xl" />
+                            ) : (
+                                <img src={fullScreenImage} alt="Fullscreen View" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <p className="text-gray-500 text-sm font-medium">Total Vendors</p>
-                        <h3 className="text-3xl font-bold text-gray-900">{vendors.length}</h3>
+                        <h3 className="text-3xl font-bold text-gray-900">{vendors.filter(v => v.verification_status !== 'REJECTED' && v.user?.vendorStatus !== 'rejected').length}</h3>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <p className="text-gray-500 text-sm font-medium">Pending Approvals</p>
-                        <h3 className="text-3xl font-bold text-amber-600">{vendors.filter(v => !v.isApproved).length}</h3>
+                        <h3 className="text-3xl font-bold text-amber-600">{vendors.filter(v => !v.isApproved && v.verification_status !== 'REJECTED' && v.user?.vendorStatus !== 'rejected').length}</h3>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <p className="text-gray-500 text-sm font-medium">Active Plans</p>
@@ -208,10 +294,10 @@ const AdminDashboard = () => {
                                 <tbody className="divide-y divide-gray-100">
                                     {loading ? (
                                         <tr><td colSpan="4" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading data...</td></tr>
-                                    ) : filteredVendors.length === 0 ? (
+                                    ) : paginatedVendors.length === 0 ? (
                                         <tr><td colSpan="4" className="p-10 text-center text-gray-500">No vendors found.</td></tr>
                                     ) : (
-                                        filteredVendors.map((vendor) => (
+                                        paginatedVendors.map((vendor) => (
                                             <tr key={vendor._id} className="hover:bg-gray-50/80 transition-colors group">
                                                 <td className="p-5">
                                                     <div className="flex items-center">
@@ -235,7 +321,11 @@ const AdminDashboard = () => {
                                                     </div>
                                                 </td>
                                                 <td className="p-5">
-                                                    {vendor.isApproved ? (
+                                                    {vendor.verification_status === 'REJECTED' || vendor.user?.vendorStatus === 'rejected' ? (
+                                                        <span className="flex items-center text-rose-700 text-sm font-bold bg-rose-50 px-3 py-1 rounded-full w-fit">
+                                                            <XCircle size={14} className="mr-1" /> Rejected
+                                                        </span>
+                                                    ) : vendor.isApproved ? (
                                                         <span className="flex items-center text-emerald-700 text-sm font-bold bg-emerald-50 px-3 py-1 rounded-full w-fit">
                                                             <CheckCircle size={14} className="mr-1" /> Approved
                                                         </span>
@@ -248,13 +338,10 @@ const AdminDashboard = () => {
                                                 <td className="p-5 text-right">
                                                     <div className="flex justify-end items-center space-x-2">
                                                         {/* Approval Actions */}
-                                                        {!vendor.isApproved && (
+                                                        {(!vendor.isApproved && vendor.verification_status !== 'REJECTED') && (
                                                             <>
-                                                                <button onClick={() => handleApproval(vendor._id, 'approved')} className="p-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg transition-colors" title="Approve">
-                                                                    <CheckCircle size={16} />
-                                                                </button>
-                                                                <button onClick={() => handleApproval(vendor._id, 'rejected')} className="p-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg transition-colors" title="Reject">
-                                                                    <XCircle size={16} />
+                                                                <button onClick={() => { setSelectedVendor(vendor); setShowDetailsModal(true); }} className="px-3 py-1 bg-brand-primary text-white text-xs font-bold rounded-lg hover:bg-brand-primary/90 transition-colors" title="Review & Approve">
+                                                                    Review KYC
                                                                 </button>
                                                                 <div className="h-4 w-px bg-gray-300 mx-2"></div>
                                                             </>
@@ -286,6 +373,54 @@ const AdminDashboard = () => {
                                     )}
                                 </tbody>
                             </table>
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex justify-between items-center p-4 border-t border-gray-100 bg-gray-50/50">
+                                    <span className="text-sm text-gray-500 font-medium">
+                                        Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredVendors.length)} of {filteredVendors.length} entries
+                                    </span>
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-semibold disabled:opacity-50 text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            Prev
+                                        </button>
+                                        {[...Array(totalPages)].map((_, i) => {
+                                            // Simple pagination window logic
+                                            if (
+                                                i === 0 || 
+                                                i === totalPages - 1 || 
+                                                (i >= currentPage - 2 && i <= currentPage)
+                                            ) {
+                                                return (
+                                                    <button 
+                                                        key={i + 1} 
+                                                        onClick={() => setCurrentPage(i + 1)}
+                                                        className={`px-3 py-1 rounded-md text-sm font-semibold border transition-colors ${currentPage === i + 1 ? 'bg-brand-primary text-white border-brand-primary shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                                    >
+                                                        {i + 1}
+                                                    </button>
+                                                );
+                                            } else if (i === 1 || i === totalPages - 2) {
+                                                if (!window.paginationDotsRendered) {
+                                                    // Naive dots spacing
+                                                    return <span key={i} className="px-2 py-1 text-gray-400">...</span>;
+                                                }
+                                            }
+                                            return null;
+                                        })}
+                                        <button 
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-3 py-1 rounded-md bg-white border border-gray-200 text-sm font-semibold disabled:opacity-50 text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -372,6 +507,114 @@ const AdminDashboard = () => {
                         <div className="mt-6">
                             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Description</h3>
                             <p className="text-gray-700 bg-gray-50 p-4 rounded-xl text-sm leading-relaxed">{selectedVendor.description || 'No description provided.'}</p>
+                        </div>
+
+                        {/* KYC Section */}
+                        <div className="mt-8 border-t border-gray-100 pt-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                                <Shield className="mr-2 text-brand-primary" size={20} /> Vendor KYC & Verification
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">GST Number</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-bold text-gray-900">{selectedVendor.gst_number || 'N/A'}</p>
+                                            {selectedVendor.gst_number && (
+                                                <button 
+                                                    onClick={() => handleVerifyGst(selectedVendor._id)} 
+                                                    disabled={verifyingGst}
+                                                    className="px-3 py-1 bg-brand-secondary text-gray-900 text-xs font-bold rounded-lg hover:bg-brand-secondary/80 disabled:opacity-50"
+                                                >
+                                                    {verifyingGst ? 'Verifying...' : 'Verify GST'}
+                                                </button>
+                                            )}
+                                        </div>
+                                        
+                                        <p className="mt-4 text-xs font-bold text-gray-500 uppercase mb-1">PAN Number</p>
+                                        <p className="font-bold text-gray-900">{selectedVendor.pan_number || 'N/A'}</p>
+
+                                        <p className="mt-4 text-xs font-bold text-gray-500 uppercase mb-1">Official Phone Number</p>
+                                        <p className="font-bold text-gray-900">{selectedVendor.phone_number || 'N/A'}</p>
+
+                                        <p className="mt-4 text-xs font-bold text-gray-500 uppercase mb-1">Date of Birth</p>
+                                        <p className="font-bold text-gray-900">
+                                            {selectedVendor.date_of_birth 
+                                                ? new Date(selectedVendor.date_of_birth).toLocaleDateString('en-GB') 
+                                                : 'N/A'}
+                                        </p>
+
+                                        <p className="mt-4 text-xs font-bold text-gray-500 uppercase mb-1">Status</p>
+                                        <p className={`font-bold ${selectedVendor.is_verified ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                            {selectedVendor.verification_status || 'PENDING'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">Business Documents</p>
+                                        {selectedVendor.business_documents && selectedVendor.business_documents.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedVendor.business_documents.map((doc, idx) => (
+                                                    <button 
+                                                        key={idx} 
+                                                        onClick={() => setFullScreenImage(doc)} 
+                                                        className="block w-[120px] aspect-square border border-gray-200 rounded-lg overflow-hidden hover:opacity-80 transition-opacity bg-white hover:ring-2 hover:ring-brand-primary cursor-pointer relative group"
+                                                    >
+                                                        {(doc.includes('.pdf') || doc.includes('data:application/pdf')) ? (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center text-xs font-bold text-gray-500">
+                                                                <FileText className="mb-2 text-gray-400" size={24} />
+                                                                PDF {idx + 1}
+                                                                <span className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-bold text-gray-800 backdrop-blur-sm">View</span>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <img src={doc} alt={`Doc ${idx + 1}`} className="w-full h-full object-cover" />
+                                                                <span className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white backdrop-blur-sm">View</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : selectedVendor.pan_card_image ? (
+                                            <button 
+                                                onClick={() => setFullScreenImage(selectedVendor.pan_card_image)}
+                                                className="block max-w-[200px] border border-gray-200 rounded-lg overflow-hidden hover:opacity-80 transition-opacity cursor-pointer relative group"
+                                            >
+                                                <img src={selectedVendor.pan_card_image} alt="PAN Card Legacy" className="w-full h-auto object-cover" />
+                                                <span className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white backdrop-blur-sm">View</span>
+                                            </button>
+                                        ) : (
+                                            <p className="text-sm border border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500">No documents uploaded</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* GST Verification Results Modal/Section */}
+                            {gstDetails && (
+                                <div className="mt-4 p-4 border border-brand-secondary bg-brand-secondary/5 rounded-xl">
+                                    <h4 className="text-sm font-bold text-gray-900 mb-2">GST Verification Result</h4>
+                                    <pre className="text-xs bg-white p-3 rounded border border-gray-200 overflow-x-auto text-gray-700 font-mono">
+                                        {JSON.stringify(gstDetails, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
+
+                            {/* KYC Actions */}
+                            <div className="mt-6 flex gap-3 justify-end">
+                                <button 
+                                    onClick={() => handleRejectBackend(selectedVendor._id)} 
+                                    className="px-6 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-xl font-bold transition-colors flex items-center"
+                                >
+                                    <XCircle size={18} className="mr-2" /> Reject Vendor
+                                </button>
+                                <button 
+                                    onClick={() => handleApproveBackend(selectedVendor._id)} 
+                                    className="px-6 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl font-bold transition-colors flex items-center shadow-lg shadow-emerald-600/20"
+                                >
+                                    <CheckCircle size={18} className="mr-2" /> Approve Vendor
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

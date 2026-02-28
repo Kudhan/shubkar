@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Spinner from '../components/ui/Spinner';
+import { useAuth } from '../context/AuthContext';
 
 const VendorRegister = () => {
+    const { login } = useAuth();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -52,7 +54,15 @@ const VendorRegister = () => {
                 [parent]: { ...prev[parent], [child]: value }
             }));
         } else {
-            setFormData({ ...formData, [name]: value });
+            if (name === 'city') {
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: value,
+                    serviceCities: prev.serviceCities.filter(c => c !== value)
+                }));
+            } else {
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
         }
     };
 
@@ -86,6 +96,18 @@ const VendorRegister = () => {
         });
     };
 
+    const toggleServiceCity = (city) => {
+        setFormData(prev => {
+            const exists = prev.serviceCities.includes(city);
+            return {
+                ...prev,
+                serviceCities: exists
+                    ? prev.serviceCities.filter(c => c !== city)
+                    : [...prev.serviceCities, city]
+            };
+        });
+    };
+
     const nextStep = (e) => {
         e.preventDefault();
         setStep(step + 1);
@@ -97,6 +119,8 @@ const VendorRegister = () => {
         window.scrollTo(0, 0);
     };
 
+    const [businessDocs, setBusinessDocs] = useState([]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -105,14 +129,37 @@ const VendorRegister = () => {
             // Include primary service in services array if not present
             const finalServices = [...new Set([...formData.services, formData.serviceType])];
 
-            const payload = {
-                ...formData,
-                services: finalServices
-            };
+            const formDataObj = new FormData();
+            
+            // Append basic fields
+            Object.keys(formData).forEach(key => {
+                if (key === 'services' || key === 'serviceCities' || key === 'awards' || key === 'socialLinks' || key === 'bookingPolicy') return;
+                formDataObj.append(key, formData[key]);
+            });
 
-            const res = await api.post('/auth/register', payload);
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.data.user));
+            // Append arrays
+            finalServices.forEach(item => formDataObj.append('services', item));
+            if (formData.serviceCities) formData.serviceCities.forEach(item => formDataObj.append('serviceCities', item));
+            if (formData.awards) formData.awards.forEach(item => formDataObj.append('awards', item));
+
+            // Append objects as stringified JSON
+            formDataObj.append('socialLinks', JSON.stringify(formData.socialLinks));
+            formDataObj.append('bookingPolicy', JSON.stringify(formData.bookingPolicy));
+
+            // Append Business Documents
+            if (businessDocs) {
+                Array.from(businessDocs).forEach(file => {
+                    formDataObj.append('business_documents', file);
+                });
+            }
+
+            const res = await api.post('/auth/register', formDataObj, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            login(res.data.data.user, res.data.token);
             toast.success("Welcome to SHUBAKAR! Your vendor account is created.");
             navigate('/vendor/dashboard');
         } catch (err) {
@@ -125,6 +172,7 @@ const VendorRegister = () => {
     };
 
     const SERVICE_OPTIONS = ['Venue', 'Catering', 'Decor', 'Photography', 'Music', 'Entertainment', 'Makeup', 'Planner'];
+    const ALLOWED_CITIES = ['Visakhapatnam', 'Vizianagaram', 'Srikakulam', 'Kakinada', 'Vijayawada'];
 
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
@@ -231,8 +279,13 @@ const VendorRegister = () => {
                                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Primary Base City</label>
                                                 <div className="relative">
                                                     <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
-                                                    <input type="text" name="city" required value={formData.city} onChange={handleChange}
-                                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all" placeholder="Mumbai" />
+                                                    <select name="city" required value={formData.city} onChange={handleChange}
+                                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all appearance-none bg-white">
+                                                        <option value="" disabled>Select your primary city</option>
+                                                        {ALLOWED_CITIES.map(city => (
+                                                            <option key={city} value={city}>{city}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -262,18 +315,18 @@ const VendorRegister = () => {
 
                                             {/* Service Cities */}
                                             <div className="col-span-2">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Other Cities You Serve</label>
-                                                <div className="flex gap-2 mb-2">
-                                                    <input type="text" value={tempCity} onChange={(e) => setTempCity(e.target.value)}
-                                                        className="flex-grow px-4 py-2 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none" placeholder="Add another city (e.g. Pune)"
-                                                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addArrayItem('serviceCities', tempCity, setTempCity))} />
-                                                    <button type="button" onClick={() => addArrayItem('serviceCities', tempCity, setTempCity)} className="bg-gray-100 p-2 rounded-xl hover:bg-gray-200"><Plus /></button>
-                                                </div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Other Cities You Serve</label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {formData.serviceCities.map((city, idx) => (
-                                                        <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs flex items-center">
-                                                            {city} <button type="button" onClick={() => removeArrayItem('serviceCities', idx)} className="ml-1 hover:text-red-500"><X size={12} /></button>
-                                                        </span>
+                                                    {ALLOWED_CITIES.filter(c => c !== formData.city).map(city => (
+                                                        <button
+                                                            key={city} type="button"
+                                                            onClick={() => toggleServiceCity(city)}
+                                                            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border ${formData.serviceCities.includes(city)
+                                                                ? 'bg-brand-primary text-white border-brand-primary shadow-lg'
+                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-brand-secondary'
+                                                                }`}>
+                                                            {city}
+                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -384,6 +437,45 @@ const VendorRegister = () => {
                                                     ))}
                                                 </div>
                                             </div>
+                                            {/* KYC Fields */}
+                                            <div className="col-span-2">
+                                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mt-4">
+                                                    <h4 className="text-lg font-bold text-gray-900 mb-4">KYC Information (Optional initially)</h4>
+                                                    <div className="grid grid-cols-1 gap-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">GST Number</label>
+                                                                <input type="text" name="gst_number" value={formData.gst_number || ''} onChange={handleChange}
+                                                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none uppercase" placeholder="e.g. 27AAAAA0000A1Z5" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">PAN Number</label>
+                                                                <input type="text" name="pan_number" value={formData.pan_number || ''} onChange={handleChange}
+                                                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none uppercase" placeholder="e.g. ABCDE1234F" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Registered Phone Number</label>
+                                                                <input type="tel" name="phone_number" value={formData.phone_number || ''} onChange={handleChange}
+                                                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none" placeholder="e.g. +91 9876543210" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date of Birth</label>
+                                                                <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange}
+                                                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none" />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Upload FSSAI, GST, PAN card or any other docs</label>
+                                                            <input type="file" multiple onChange={(e) => setBusinessDocs(e.target.files)} accept="image/*,application/pdf"
+                                                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-brand-secondary outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-black" />
+                                                            {businessDocs && businessDocs.length > 0 && <p className="text-xs text-brand-primary mt-2 flex items-center"><CheckCircle size={12} className="mr-1" /> {businessDocs.length} files selected</p>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 )}

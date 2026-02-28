@@ -1,6 +1,7 @@
 const VendorProfile = require('../models/VendorProfile');
 const User = require('../models/User');
 const Event = require('../models/Event');
+const axios = require('axios');
 
 exports.createProfile = async (req, res) => {
     try {
@@ -278,6 +279,73 @@ exports.deleteVendor = async (req, res) => {
             status: 'success',
             data: null
         });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Admin: Verify GST
+exports.verifyGst = async (req, res) => {
+    try {
+        const { vendor_id } = req.params;
+        const vendor = await VendorProfile.findById(vendor_id);
+        
+        if (!vendor) {
+            return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        }
+        
+        if (!vendor.gst_number) {
+            return res.status(400).json({ status: 'fail', message: 'Vendor does not have a GST number' });
+        }
+        
+        // Call external API
+        const gstApiUrl = `https://rappid.in/apis/gst.php?mobile=123&gst=${vendor.gst_number}`;
+        const response = await axios.get(gstApiUrl);
+        
+        res.status(200).json({
+            status: 'success',
+            data: response.data
+        });
+    } catch (err) {
+        res.status(500).json({ status: 'fail', message: 'Failed to verify GST' });
+    }
+};
+
+// Admin: Approve Vendor
+exports.approveVendor = async (req, res) => {
+    try {
+        const { vendor_id } = req.params;
+        const vendor = await VendorProfile.findByIdAndUpdate(vendor_id, {
+            is_verified: true,
+            verification_status: 'APPROVED',
+            isApproved: true
+        }, { new: true });
+        
+        if (!vendor) return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        
+        await User.findByIdAndUpdate(vendor.user, { vendorStatus: 'approved' });
+        
+        res.status(200).json({ status: 'success', data: { vendor } });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// Admin: Reject Vendor
+exports.rejectVendor = async (req, res) => {
+    try {
+        const { vendor_id } = req.params;
+        const vendor = await VendorProfile.findByIdAndUpdate(vendor_id, {
+            is_verified: false,
+            verification_status: 'REJECTED',
+            isApproved: false
+        }, { new: true });
+        
+        if (!vendor) return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
+        
+        await User.findByIdAndUpdate(vendor.user, { vendorStatus: 'rejected' });
+        
+        res.status(200).json({ status: 'success', data: { vendor } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

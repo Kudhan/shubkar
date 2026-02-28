@@ -21,6 +21,7 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 const VendorProfile = require('../models/VendorProfile');
+const { uploadImageToCloudinary } = require('../utils/cloudinary');
 
 exports.register = async (req, res) => {
     try {
@@ -47,6 +48,22 @@ exports.register = async (req, res) => {
 
         // Create Vendor Profile if role is vendor
         if (userRole === 'vendor') {
+            let business_documents = [];
+            if (req.files && req.files.length > 0) {
+                const uploadPromises = req.files.map(file => uploadImageToCloudinary(file.buffer, file.mimetype));
+                business_documents = await Promise.all(uploadPromises);
+            }
+
+            let bookingPolicy = otherDetails.bookingPolicy;
+            if (typeof bookingPolicy === 'string') {
+                try { bookingPolicy = JSON.parse(bookingPolicy); } catch(e) {}
+            }
+            
+            let socialLinks = otherDetails.socialLinks;
+            if (typeof socialLinks === 'string') {
+                try { socialLinks = JSON.parse(socialLinks); } catch(e) {}
+            }
+
             const newProfile = await VendorProfile.create({
                 user: newUser._id,
                 companyName: otherDetails.companyName || otherDetails.serviceType || name + "'s Service",
@@ -60,9 +77,18 @@ exports.register = async (req, res) => {
                 // New Extended Fields
                 serviceCities: otherDetails.serviceCities,
                 foundedYear: otherDetails.foundedYear,
-                socialLinks: otherDetails.socialLinks,
-                bookingPolicy: otherDetails.bookingPolicy,
-                awards: otherDetails.awards
+                socialLinks: socialLinks,
+                bookingPolicy: bookingPolicy,
+                awards: otherDetails.awards,
+                
+                // New Fields for KYC
+                gst_number: req.body.gst_number || otherDetails.gst_number || null,
+                pan_number: req.body.pan_number || otherDetails.pan_number || null,
+                phone_number: req.body.phone_number || otherDetails.phone_number || null,
+                date_of_birth: req.body.date_of_birth || otherDetails.date_of_birth || null,
+                business_documents: business_documents,
+                is_verified: false,
+                verification_status: 'PENDING'
             });
 
             newUser.vendorProfile = newProfile._id;

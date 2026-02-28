@@ -65,6 +65,25 @@ exports.getVendorPlans = async (req, res) => {
     }
 };
 
+exports.getAllPlans = async (req, res) => {
+    try {
+        const plans = await ServicePlan.find().populate('vendor', 'companyName email');
+        
+        res.status(200).json({
+            status: 'success',
+            results: plans.length,
+            data: {
+                plans
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+};
+
 // Get My Plans (Vendor Protected - sees inactive too)
 exports.getMyPlans = async (req, res) => {
     try {

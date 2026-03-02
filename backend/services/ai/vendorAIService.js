@@ -29,14 +29,19 @@ const recommendVendors = async (userMessage, history = []) => {
     try {
         const filters = await aiService.generateJSON(extractionPrompt);
         
-        // 2. Query MongoDB (Deterministic logic)
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+        }
+
+        // 2. Query MongoDB (Deterministic logic safely)
         const query = {};
         if (filters.category) {
-            // Check if services array contains the category
-            query.services = { $in: [new RegExp(filters.category, 'i')] };
+            const safeCategory = escapeRegExp(filters.category);
+            query.services = { $in: [new RegExp(safeCategory, 'i')] };
         }
         if (filters.city) {
-            query['location.city'] = new RegExp(filters.city, 'i');
+            const safeCity = escapeRegExp(filters.city);
+            query['location.city'] = new RegExp(safeCity, 'i');
         }
         if (filters.budgetMax) {
             query['priceRange.min'] = { $lte: filters.budgetMax };

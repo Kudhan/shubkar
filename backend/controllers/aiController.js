@@ -12,16 +12,25 @@ const chat = async (req, res) => {
   try {
     const { message, history = [] } = req.body;
 
-    if (!message) {
+    if (!message || typeof message !== "string") {
       return res
         .status(400)
-        .json({ status: "fail", message: "Message is required" });
+        .json({ status: "fail", message: "Message is required and must be a string." });
     }
 
-    // Convert history format if needed
-    const formattedHistory = history.map((h) => ({
+    if (message.length > 500) {
+      return res
+        .status(400)
+        .json({ status: "fail", message: "Message length exceeds maximum allowed limit (500 chars)." });
+    }
+
+    // Convert history format if needed and truncate length to prevent payload OOM scaling attacks
+    const maxHistoryItems = 6;
+    let validHistory = Array.isArray(history) ? history.slice(-maxHistoryItems) : [];
+
+    const formattedHistory = validHistory.map((h) => ({
       role: h.role === "user" ? "user" : "assistant",
-      content: h.text || h.content || "",
+      content: (h.text || h.content || "").substring(0, 1000), // Protect against massive injection
     }));
 
     // 1. Classify Intent
@@ -91,14 +100,40 @@ const getVendorRecommendations = async (req, res) => {
 };
 
 const analyzeRisk = async (req, res) => {
-  // Placeholder for budget risk analysis
-  res.status(200).json({
-    status: "success",
-    data: {
-      riskLevel: "LOW",
-      analysis: "Automated risk assessment complete.",
-    },
-  });
+  try {
+    const { eventDetails, userBudget } = req.body;
+
+    if (!eventDetails || typeof userBudget !== 'number') {
+      return res.status(400).json({ status: "fail", message: "Event details and numeric budget are required." });
+    }
+
+    const prompt = `
+        You are an expert AI risk analyst for SHUBAKAR, an event planning platform.
+        Assess the budget and planning risk for an upcoming event based on the following details:
+        Event Details: ${JSON.stringify(eventDetails)}
+        User Budget: ${userBudget} INR
+        
+        Provide a structured JSON risk analysis containing:
+        {
+          "riskLevel": "LOW", "MEDIUM", or "CRITICAL",
+          "analysis": "A concise 2 sentence explanation of the risk.",
+          "hiddenCosts": ["String array of 2 potential hidden costs to watch out for"]
+        }
+    `;
+
+    const riskData = await aiService.generateJSON(prompt);
+
+    res.status(200).json({
+      status: "success",
+      data: riskData,
+    });
+  } catch (error) {
+    console.error("AI Risk Assessment Error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error during risk analysis. Please try again later.",
+    });
+  }
 };
 
 module.exports = {

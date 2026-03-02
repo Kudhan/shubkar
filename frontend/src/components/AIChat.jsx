@@ -80,61 +80,73 @@ const AIChat = () => {
 
     // --- Sub-components for structured data ---
 
-    const BudgetTable = ({ plan }) => (
-        <div className="mt-4 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-gray-900 text-white p-3 flex justify-between items-center text-xs font-bold uppercase tracking-wider">
-                <span>{plan.eventType} Budget - {plan.city}</span>
-                <span>₹{plan.totalBudget.toLocaleString()}</span>
-            </div>
-            <div className="p-3 space-y-3">
-                {plan.budgetBreakdown.map((item, i) => (
-                    <div key={i}>
-                        <div className="flex justify-between text-xs mb-1">
-                            <span className="font-semibold text-gray-700">{item.category}</span>
-                            <span className="font-bold text-gray-900">₹{item.amount.toLocaleString()}</span>
+    const BudgetTable = ({ plan }) => {
+        if (!plan) return null;
+        return (
+            <div className="mt-4 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gray-900 text-white p-3 flex justify-between items-center text-xs font-bold uppercase tracking-wider">
+                    <span>{plan.eventType || 'Event'} Budget - {plan.city || 'Standard'}</span>
+                    <span>₹{(plan.totalBudget || 0).toLocaleString()}</span>
+                </div>
+                <div className="p-3 space-y-3">
+                    {Array.isArray(plan.budgetBreakdown) && plan.budgetBreakdown.map((item, i) => (
+                        <div key={i}>
+                            <div className="flex justify-between text-xs mb-1">
+                                <span className="font-semibold text-gray-700">{item?.category || 'Category'}</span>
+                                <span className="font-bold text-gray-900">₹{(item?.amount || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                <div className="bg-brand-secondary h-1.5 rounded-full" style={{ width: `${item?.percentage || 0}%` }}></div>
+                            </div>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div className="bg-brand-secondary h-1.5 rounded-full" style={{ width: `${item.percentage}%` }}></div>
+                    ))}
+                </div>
+                {plan.summary && (
+                    <div className="bg-blue-50 p-3 text-[10px] text-blue-700 italic border-t border-blue-100">
+                        {plan.summary}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const VendorCards = ({ data }) => {
+        if (!data || !Array.isArray(data.vendors)) return null;
+        return (
+            <div className="mt-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest pl-1">Recommendations</p>
+                {data.vendors.map((vendor, i) => (
+                    <div key={i} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h4 className="font-bold text-gray-900 flex items-center gap-1">
+                                    {vendor?.companyName || 'Unknown Vendor'}
+                                    <Zap size={10} className="text-brand-primary fill-brand-primary" />
+                                </h4>
+                                <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                    <MapPin size={10} /> {vendor?.location?.city || 'Location N/A'} • {vendor?.services?.[0] || 'Service N/A'}
+                                </p>
+                            </div>
+                            {vendor?._id && (
+                                <Link 
+                                    to={`/vendors/${vendor._id}`}
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors"
+                                >
+                                    <ExternalLink size={14} />
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}
-            </div>
-            <div className="bg-blue-50 p-3 text-[10px] text-blue-700 italic border-t border-blue-100">
-                {plan.summary}
-            </div>
-        </div>
-    );
-
-    const VendorCards = ({ data }) => (
-        <div className="mt-4 space-y-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest pl-1">Recommendations</p>
-            {data.vendors.map((vendor, i) => (
-                <div key={i} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h4 className="font-bold text-gray-900 flex items-center gap-1">
-                                {vendor.companyName}
-                                <Zap size={10} className="text-brand-primary fill-brand-primary" />
-                            </h4>
-                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-                                <MapPin size={10} /> {vendor.location?.city} • {vendor.services?.[0]}
-                            </p>
-                        </div>
-                        <Link 
-                            to={`/vendors/${vendor._id}`}
-                            onClick={() => setIsOpen(false)}
-                            className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors"
-                        >
-                            <ExternalLink size={14} />
-                        </Link>
+                {data.aiAdvice && (
+                    <div className="p-3 bg-brand-primary/5 rounded-xl border border-brand-primary/10 text-xs text-brand-primary italic">
+                        "{data.aiAdvice}"
                     </div>
-                </div>
-            ))}
-            <div className="p-3 bg-brand-primary/5 rounded-xl border border-brand-primary/10 text-xs text-brand-primary italic">
-                "{data.aiAdvice}"
+                )}
             </div>
-        </div>
-    );
+        );
+    };
 
     const NavigationCard = ({ content }) => (
         <div className="mt-4">

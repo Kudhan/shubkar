@@ -31,11 +31,16 @@ const app = express();
 const httpServer = createServer(app);
 
 // Cross-Origin Resource Sharing (CORS) Configuration
-const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://shubkar.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigin,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true
   }
@@ -56,7 +61,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 app.use(cors({
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true
 }));

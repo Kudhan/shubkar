@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { X, Printer, Download, CheckCircle, Mail, Clock, Loader } from 'lucide-react';
-import api from '../utils/api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const InvoiceModal = ({ booking, onClose, user }) => {

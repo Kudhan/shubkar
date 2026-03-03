@@ -13,4 +13,7 @@ router.post('/:bookingId/negotiate', authMiddleware.restrictTo('vendor', 'custom
 router.patch('/:bookingId/accept', authMiddleware.restrictTo('vendor', 'customer'), bookingController.acceptBooking);
 router.patch('/:bookingId/reject', authMiddleware.restrictTo('vendor', 'customer'), bookingController.rejectBooking);
 
+// Invoices
+router.post('/:bookingId/send-invoice', authMiddleware.restrictTo('vendor', 'customer', 'admin', 'super-admin'), bookingController.sendInvoice);
+
 module.exports = router;

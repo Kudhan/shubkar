@@ -5,7 +5,18 @@ const dotenv = require('dotenv');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+
 dotenv.config();
+
+// Production Console Clean Up
+if (process.env.NODE_ENV === 'production') {
+    console.log = function () {};
+    console.debug = function () {};
+    // Keep console.error for critical crash logs in Render
+}
 
 const authRoutes = require('./routes/authRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
@@ -18,16 +29,39 @@ const Message = require('./models/Message');
 
 const app = express();
 const httpServer = createServer(app);
+
+// Cross-Origin Resource Sharing (CORS) Configuration
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: allowedOrigin,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true
   }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Middleware - Security & Performance
+app.use(helmet());
+app.use(compression());
+
+// Strict Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per `window`
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests from this IP, please try again later.',
+});
+app.use('/api', limiter);
+
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' })); // Body size limit
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -45,23 +79,46 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 
 app.get('/', (req, res) => {
-  res.send('SHUBAKAR Backend is Running');
+  res.send('SHUBAKAR Backend is Running in ' + (process.env.NODE_ENV || 'development') + ' mode');
+});
+
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date()
+  });
 });
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/shubakar';
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/shubakar';
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('MongoDB Connected');
+const connectDB = async (retries = 5, delay = 5000) => {
+    while (retries > 0) {
+      try {
+        await mongoose.connect(MONGO_URI);
+        // Important: Re-enabling explicit console for this crucial boot log
+        process.stdout.write(`MongoDB Connected successfully to ${MONGO_URI.split('@').pop().split('/')[0]}\n`);
+        return true;
+      } catch (err) {
+        retries -= 1;
+        process.stderr.write(`MongoDB Connection Error. Retries left: ${retries}\nError details: ${err.message}\n`);
+        if (retries === 0) {
+            process.stderr.write("MongoDB failed to connect completely. Exiting Node process.\n");
+            process.exit(1);
+        }
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+};
+
+connectDB().then(() => {
     httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+        process.stdout.write(`Server running on port ${PORT}\n`);
     });
-  })
-  .catch(err => {
-    console.error('MongoDB Connection Error:', err);
-  });
+});
 
 // Socket.IO
 io.on('connection', (socket) => {

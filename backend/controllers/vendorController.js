@@ -2,6 +2,7 @@ const VendorProfile = require('../models/VendorProfile');
 const User = require('../models/User');
 const Event = require('../models/Event');
 const axios = require('axios');
+const emailService = require('../services/emailService');
 
 exports.createProfile = async (req, res) => {
     try {
@@ -319,11 +320,20 @@ exports.approveVendor = async (req, res) => {
             is_verified: true,
             verification_status: 'APPROVED',
             isApproved: true
-        }, { new: true });
+        }, { new: true }).populate('user', 'email name');
         
         if (!vendor) return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
         
-        await User.findByIdAndUpdate(vendor.user, { vendorStatus: 'approved' });
+        await User.findByIdAndUpdate(vendor.user._id || vendor.user, { vendorStatus: 'approved' });
+        
+        // --- Trigger Email ---
+        try {
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const loginLink = `${frontendUrl}/login`;
+            await emailService.sendVendorStatusEmail(vendor.user.email, vendor.user.name, 'approved', loginLink);
+        } catch (emailErr) {
+            console.error('[Email Error] Failed to send approval email:', emailErr.message);
+        }
         
         res.status(200).json({ status: 'success', data: { vendor } });
     } catch (err) {
@@ -335,17 +345,25 @@ exports.approveVendor = async (req, res) => {
 exports.rejectVendor = async (req, res) => {
     try {
         const { vendor_id } = req.params;
-        const vendor = await VendorProfile.findByIdAndUpdate(vendor_id, {
-            is_verified: false,
-            verification_status: 'REJECTED',
-            isApproved: false
-        }, { new: true });
+        const vendor = await VendorProfile.findById(vendor_id).populate('user', 'email name');
         
         if (!vendor) return res.status(404).json({ status: 'fail', message: 'Vendor not found' });
         
-        await User.findByIdAndUpdate(vendor.user, { vendorStatus: 'rejected' });
+        // --- Trigger Email First before deleting data ---
+        try {
+            await emailService.sendVendorStatusEmail(vendor.user.email, vendor.user.name, 'rejected', null, req.body.reason);
+        } catch (emailErr) {
+            console.error('[Email Error] Failed to send rejection email:', emailErr.message);
+        }
+
+        // --- Delete Data from Database ---
+        // Delete the user account so they can use the same email to re-register
+        await User.findByIdAndDelete(vendor.user._id || vendor.user);
         
-        res.status(200).json({ status: 'success', data: { vendor } });
+        // Delete the vendor profile
+        await VendorProfile.findByIdAndDelete(vendor_id);
+        
+        res.status(200).json({ status: 'success', message: 'Vendor rejected and all associated data deleted successfully.' });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

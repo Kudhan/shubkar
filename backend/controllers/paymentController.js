@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const Transaction = require('../models/Transaction');
+const PDFDocument = require('pdfkit');
+const emailService = require('../services/emailService');
 
 // Mock Payment Gateway processing
 exports.processPayment = async (req, res) => {
@@ -164,6 +166,118 @@ exports.generateInvoice = async (req, res) => {
         };
 
         res.status(200).json({ status: 'success', data: { invoice } });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.emailInvoice = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        // Populate vendor's user to get email if needed
+        const booking = await Booking.findById(bookingId)
+            .populate('customer')
+            .populate({
+                path: 'vendor',
+                populate: { path: 'user' }
+            });
+
+        if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+        if (booking.paymentStatus !== 'paid') {
+            return res.status(400).json({ message: 'Invoice available only for paid bookings' });
+        }
+
+        const amount = booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0;
+
+        const transaction = await Transaction.findOne({ booking: bookingId });
+        const paymentMethod = transaction ? transaction.paymentMethod : 'N/A';
+        const invoiceId = 'INV-' + (booking.transactionId ? booking.transactionId.split('_')[1] : Date.now());
+
+        const invoiceDetails = {
+            id: invoiceId,
+            service: booking.serviceType,
+            amount: amount,
+            date: new Date(),
+            customer: booking.customer?.name || "Customer",
+            vendor: booking.vendor?.companyName || "Vendor",
+            paymentMode: paymentMethod
+        };
+
+        // Determine recipient
+        let recipientEmail = booking.customer.email;
+        let recipientName = booking.customer.name;
+        
+        // If current user is the vendor or requested for vendor
+        if (req.user && req.user.role === 'vendor') {
+            // Check if vendor profile matches.
+            // Using user object populated in vendor
+            if (booking.vendor?.user?.email) {
+                recipientEmail = booking.vendor.user.email;
+                recipientName = booking.vendor.user.name;
+            } else {
+                 recipientEmail = req.user.email;
+                 recipientName = req.user.name;
+            }
+        }
+
+        // Generate PDF
+        const doc = new PDFDocument({ margin: 50 });
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', async () => {
+            const pdfData = Buffer.concat(buffers);
+            
+            try {
+                await emailService.sendInvoiceEmail(recipientEmail, recipientName, invoiceDetails, pdfData);
+                res.status(200).json({ status: 'success', message: 'Invoice emailed successfully' });
+            } catch (emailErr) {
+                console.error('[Invoice Email Error]', emailErr.message);
+                res.status(500).json({ status: 'error', message: 'Failed to send invoice email' });
+            }
+        });
+
+        // Simple PDF Design
+        doc.fontSize(28).fillColor('#FF6B6B').text('SHUBKAR', { align: 'center' });
+        doc.fontSize(10).fillColor('#6B7280').text('Event Management Platform', { align: 'center' });
+        doc.moveDown(2);
+        
+        doc.fontSize(20).fillColor('#1F2937').text('INVOICE', { underline: true });
+        doc.moveDown();
+        
+        doc.fontSize(12).text(`Invoice ID:  ${invoiceId}`);
+        doc.text(`Date:        ${invoiceDetails.date.toLocaleDateString()}`);
+        doc.moveDown();
+        
+        doc.text(`Billed To:  ${invoiceDetails.customer}`);
+        doc.text(`Vendor:     ${invoiceDetails.vendor}`);
+        doc.moveDown();
+        
+        doc.rect(50, doc.y, 500, 20).fill('#F9FAFB');
+        doc.fillColor('#1F2937').text('Description', 60, doc.y + 5);
+        doc.text('Amount', 450, doc.y - 14, { width: 90, align: 'right' });
+        
+        doc.moveDown(1.5);
+        doc.text(`Service: ${invoiceDetails.service}`, 60, doc.y);
+        doc.text(`Rs. ${amount}`, 450, doc.y - 14, { width: 90, align: 'right' });
+        
+        doc.moveDown(2);
+        const yLine = doc.y;
+        doc.moveTo(50, yLine).lineTo(550, yLine).stroke();
+        doc.moveDown(0.5);
+        
+        doc.fontSize(14).text('Total Paid:', 60, doc.y);
+        doc.text(`Rs. ${amount}`, 450, doc.y - 14, { width: 90, align: 'right' });
+        
+        doc.moveDown(2);
+        doc.fontSize(10).fillColor('#6B7280').text(`Payment Mode: ${invoiceDetails.paymentMode}`);
+        doc.text(`Status: PAID in Full`);
+        
+        doc.moveDown(5);
+        doc.fontSize(10).text('Thank you for choosing Shubkar!', { align: 'center' });
+        
+        doc.end();
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

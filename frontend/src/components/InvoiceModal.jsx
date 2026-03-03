@@ -1,13 +1,29 @@
-import React, { useRef } from 'react';
-import { X, Printer, Download, CheckCircle, Mail, Clock } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Printer, Download, CheckCircle, Mail, Clock, Loader } from 'lucide-react';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 const InvoiceModal = ({ booking, onClose, user }) => {
     const modalRef = useRef();
+    const [isSendingUrl, setIsSendingUrl] = useState(false);
 
     if (!booking) return null;
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleSendEmail = async () => {
+        try {
+            setIsSendingUrl(true);
+            await api.post(`/bookings/${booking._id}/send-invoice`);
+            toast.success("Invoice sent directly to your email!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to send invoice email.");
+        } finally {
+            setIsSendingUrl(false);
+        }
     };
 
     // Calculate dates
@@ -147,8 +163,8 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                             <p><span className="font-bold text-gray-700">Payment Mode:</span> {booking.paymentMode || "Online"}</p>
                             <p><span className="font-bold text-gray-700">Paid on:</span> {invoiceDate}</p>
                         </div>
-                        <button className="flex items-center gap-2 text-brand-primary font-bold hover:underline print:hidden">
-                            <Mail size={16} /> Email Invoice
+                        <button onClick={handleSendEmail} disabled={isSendingUrl} className="flex items-center gap-2 text-brand-primary font-bold hover:underline print:hidden disabled:opacity-50">
+                            {isSendingUrl ? <><Loader size={16} className="animate-spin" /> Sending...</> : <><Mail size={16} /> Email Invoice</>}
                         </button>
                     </div>
 

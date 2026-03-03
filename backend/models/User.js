@@ -19,6 +19,25 @@ const userSchema = new mongoose.Schema({
         required: true,
         select: false, // Don't return password by default
     },
+    email_verified: {
+        type: Boolean,
+        default: false,
+    },
+    otp_hash: {
+        type: String,
+        select: false,
+    },
+    otp_expiry: {
+        type: Date,
+        select: false,
+    },
+    otp_resend_count: {
+        type: Number,
+        default: 0,
+    },
+    otp_last_resent_at: {
+        type: Date,
+    },
     role: {
         type: String,
         enum: ['customer', 'vendor', 'admin', 'superadmin'],

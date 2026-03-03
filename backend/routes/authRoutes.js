@@ -7,6 +7,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/register', upload.array('business_documents', 5), authController.register);
 router.post('/login', authController.login);
+router.post('/verify-email-otp', authController.verifyEmailOtp);
+router.post('/resend-otp', authController.resendOtp);
 
 router.patch('/update-profile', authController.protect, authController.updateProfile);
 router.patch('/update-password', authController.protect, authController.updatePassword);

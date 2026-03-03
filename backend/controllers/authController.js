@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const emailService = require('../services/emailService');
 
 const signToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -95,7 +98,34 @@ exports.register = async (req, res) => {
             await newUser.save({ validateBeforeSave: false }); // Avoid re-validating password
         }
 
-        createSendToken(newUser, 201, res);
+
+        // ---------------- OTP Section START ----------------
+        // Generate 6 digit OTP
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const hashedOtp = await bcrypt.hash(otp, 10);
+        
+        newUser.otp_hash = hashedOtp;
+        newUser.otp_expiry = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+        newUser.otp_resend_count = 0;
+        await newUser.save({ validateBeforeSave: false });
+        
+        // Send OTP email
+        try {
+            await emailService.sendOtpEmail(newUser.email, newUser.name, otp);
+        } catch (emailErr) {
+            console.error('[DEBUG] Failed to send OTP email during registration:', emailErr.message);
+            // Optionally could continue or return 500, we'll continue so user can resend
+        }
+        
+        return res.status(201).json({
+            status: 'success',
+            message: 'Registration successful. An OTP has been sent to your email. Please verify your email before logging in.',
+            data: {
+                userId: newUser._id,
+                email: newUser.email
+            }
+        });
+        // ---------------- OTP Section END ----------------
     } catch (err) {
         // If user creation succeeded but profile failed, maybe rollback? 
         // For MVP, just return error. MongoDB unique email constraint handles duplicate user.
@@ -103,6 +133,95 @@ exports.register = async (req, res) => {
             status: 'fail',
             message: err.message,
         });
+    }
+};
+
+exports.verifyEmailOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ status: 'fail', message: 'Please provide email and OTP' });
+        }
+        
+        const user = await User.findOne({ email }).select('+otp_hash +otp_expiry +email_verified');
+        
+        if (!user) {
+            return res.status(404).json({ status: 'fail', message: 'User not found' });
+        }
+        
+        if (user.email_verified) {
+            return res.status(400).json({ status: 'fail', message: 'Email is already verified' });
+        }
+        
+        if (!user.otp_hash || !user.otp_expiry || Date.now() > user.otp_expiry) {
+            return res.status(400).json({ status: 'fail', message: 'OTP has expired or is invalid. Please request a new one.' });
+        }
+        
+        const isMatch = await bcrypt.compare(String(otp), user.otp_hash);
+        if (!isMatch) {
+            return res.status(400).json({ status: 'fail', message: 'Invalid OTP' });
+        }
+        
+        // Mark as verified, clear OTP data
+        user.email_verified = true;
+        user.otp_hash = undefined;
+        user.otp_expiry = undefined;
+        await user.save({ validateBeforeSave: false });
+        
+        return res.status(200).json({
+            status: 'success',
+            message: 'Email successfully verified. You can now log in.'
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.resendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ status: 'fail', message: 'Please provide email' });
+        }
+        
+        const user = await User.findOne({ email }).select('+otp_resend_count +otp_last_resent_at +email_verified');
+        if (!user) {
+            return res.status(404).json({ status: 'fail', message: 'User not found' });
+        }
+        
+        if (user.email_verified) {
+            return res.status(400).json({ status: 'fail', message: 'Email is already verified' });
+        }
+        
+        // Rate limiting: Check if resent too recently (e.g. within 1 minute)
+        if (user.otp_last_resent_at && Date.now() - user.otp_last_resent_at < 60 * 1000) {
+            return res.status(429).json({ status: 'fail', message: 'Please wait at least 1 minute before requesting another OTP.' });
+        }
+        
+        // Rate limiting: Max resend checks (e.g. max 5 times per day, simplified here)
+        if (user.otp_resend_count && user.otp_resend_count >= 5) {
+             // Reset logic could be implemented here, assuming block indefinitely for MVP
+             return res.status(429).json({ status: 'fail', message: 'Maximum OTP resend limit reached. Please contact support.' });
+        }
+        
+        const newOtp = crypto.randomInt(100000, 999999).toString();
+        const hashedOtp = await bcrypt.hash(newOtp, 10);
+        
+        user.otp_hash = hashedOtp;
+        user.otp_expiry = Date.now() + 10 * 60 * 1000;
+        user.otp_resend_count = (user.otp_resend_count || 0) + 1;
+        user.otp_last_resent_at = Date.now();
+        await user.save({ validateBeforeSave: false });
+        
+        await emailService.sendOtpEmail(user.email, user.name, newOtp);
+        
+        return res.status(200).json({
+            status: 'success',
+            message: 'A new OTP has been sent to your email.'
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
@@ -114,12 +233,27 @@ exports.login = async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Please provide email and password' });
         }
 
-        const user = await User.findOne({ email }).select('+password');
+        // We also select otp_hash to determine if this is a legacy user (registered before OTP feature)
+        const user = await User.findOne({ email }).select('+password +email_verified +otp_hash');
 
         if (!user || !(await user.correctPassword(password, user.password))) {
             console.log(`[DEBUG] Login Failed for ${email}. UserFound: ${!!user}`);
             return res.status(401).json({ status: 'fail', message: 'Incorrect email or password' });
         }
+        
+        // OTP Verification Check
+        // Bypass for admin, superadmin, or legacy users (who have no otp_hash but aren't verified yet)
+        if (!user.email_verified && user.role !== 'superadmin' && user.role !== 'admin') {
+            if (user.otp_hash) {
+                return res.status(403).json({ 
+                    status: 'fail', 
+                    message: 'Your email is not verified. Please verify your email to log in.',
+                    requires_verification: true,
+                    email: email
+                });
+            }
+        }
+        
         console.log(`[DEBUG] Login Success for ${email}`);
 
         createSendToken(user, 200, res);

@@ -330,3 +330,63 @@ exports.getBookings = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 }
+
+// Send Invoice Email
+exports.sendInvoice = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const User = require('../models/User');
+        const emailService = require('../services/emailService');
+
+        const booking = await Booking.findById(bookingId)
+            .populate('customer', 'name email')
+            .populate('vendor', 'companyName')
+            .populate('event', 'title date location');
+
+        if (!booking) {
+            return res.status(404).json({ status: 'fail', message: 'Booking not found' });
+        }
+
+        const role = await validateBookingAccess(booking, req.user);
+        if (!role) {
+            return res.status(403).json({ status: 'fail', message: 'Not authorized to send invoice for this booking' });
+        }
+
+        // Determine who gets the email
+        // If Customer clicks -> send to Customer
+        // If Vendor clicks -> send to Vendor User Email
+        let toEmail, toName;
+        
+        if (role === 'customer') {
+            toEmail = booking.customer.email;
+            toName = booking.customer.name;
+        } else if (role === 'vendor') {
+            toEmail = req.user.email;
+            toName = req.user.name || booking.vendor?.companyName;
+        } else {
+             // Admin fallback
+             toEmail = req.user.email;
+             toName = req.user.name;
+        }
+
+        if (!toEmail) {
+            return res.status(400).json({ status: 'fail', message: 'Recipient email not found' });
+        }
+
+        const bookingDetails = {
+            id: booking.transactionId || `INV-${booking._id.toString().substr(-6).toUpperCase()}`,
+            amount: booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0,
+            service: booking.serviceType || 'Event Service',
+            vendorName: booking.vendor?.companyName || 'Vendor',
+            date: booking.date
+        };
+
+        await emailService.sendInvoiceEmail(toEmail, toName, bookingDetails);
+
+        res.status(200).json({ status: 'success', message: `Invoice sent to ${toEmail}` });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: 'fail', message: err.message });
+    }
+};

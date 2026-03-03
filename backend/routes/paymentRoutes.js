@@ -8,5 +8,6 @@ router.use(authController.protect);
 
 router.post('/pay', paymentController.processPayment);
 router.get('/invoice/:bookingId', paymentController.generateInvoice);
+router.post('/email-invoice/:bookingId', paymentController.emailInvoice);
 
 module.exports = router;

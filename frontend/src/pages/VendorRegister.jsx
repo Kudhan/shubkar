@@ -120,6 +120,7 @@ const VendorRegister = () => {
     };
 
     const [businessDocs, setBusinessDocs] = useState([]);
+    const [otp, setOtp] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -159,14 +160,43 @@ const VendorRegister = () => {
                 }
             });
 
-            login(res.data.data.user, res.data.token);
-            toast.success("Welcome to SHUBAKAR! Your vendor account is created.");
-            navigate('/vendor/dashboard');
+            toast.success("Account created! Please verify your email.");
+            setStep(5);
+            setLoading(false);
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || 'Registration failed.';
             setError(msg);
             toast.error(msg);
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.post('/auth/verify-email-otp', { email: formData.email, otp });
+            toast.success("Email verified successfully! You can now log in.");
+            navigate('/login');
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Verification failed. Invalid OTP.';
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        setLoading(true);
+        try {
+            await api.post('/auth/resend-otp', { email: formData.email });
+            toast.success("A new OTP has been sent to your email.");
+            setOtp('');
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Failed to resend OTP.';
+            toast.error(msg);
+        } finally {
             setLoading(false);
         }
     };
@@ -233,7 +263,7 @@ const VendorRegister = () => {
                     <div className="p-8 lg:w-3/4 bg-white flex flex-col">
                         {/* Error alert removed/minimized as we use toast, keeping for persistent view if needed */}
 
-                        <form onSubmit={step === 4 ? handleSubmit : nextStep} className="flex-grow flex flex-col">
+                        <form onSubmit={step === 4 ? handleSubmit : step === 5 ? handleVerifyOtp : nextStep} className="flex-grow flex flex-col">
 
                             <div className="flex-grow">
                                 {/* STEP 1: IDENTITY */}
@@ -244,17 +274,17 @@ const VendorRegister = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="col-span-2">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Owner Name</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Owner Name <span className="text-red-500">*</span></label>
                                                 <input type="text" name="name" required value={formData.name} onChange={handleChange}
                                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all" placeholder="Your Full Name" />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email (Login ID)</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email (Login ID) <span className="text-red-500">*</span></label>
                                                 <input type="email" name="email" required value={formData.email} onChange={handleChange}
                                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all" placeholder="business@example.com" />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Password <span className="text-red-500">*</span></label>
                                                 <input type="password" name="password" required value={formData.password} onChange={handleChange}
                                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all" placeholder="••••••••" />
                                             </div>
@@ -270,13 +300,13 @@ const VendorRegister = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="col-span-2">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Company Name</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Company Name <span className="text-red-500">*</span></label>
                                                 <input type="text" name="companyName" required value={formData.companyName} onChange={handleChange}
                                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all font-bold text-lg" placeholder="Ex: Royal Events" />
                                             </div>
 
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Primary Base City</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Primary Base City <span className="text-red-500">*</span></label>
                                                 <div className="relative">
                                                     <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                                                     <select name="city" required value={formData.city} onChange={handleChange}
@@ -342,7 +372,7 @@ const VendorRegister = () => {
 
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Business Description</label>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Business Description <span className="text-red-500">*</span></label>
                                                 <textarea name="description" rows="4" required value={formData.description} onChange={handleChange}
                                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none transition-all" placeholder="Tell unique story about your services..." />
                                             </div>
@@ -479,18 +509,45 @@ const VendorRegister = () => {
                                         </div>
                                     </div>
                                 )}
+                                {/* STEP 5: VERIFY OTP */}
+                                {step === 5 && (
+                                    <div className="space-y-6 animate-fade-in max-w-2xl mx-auto text-center py-12">
+                                        <h3 className="text-3xl font-bold text-gray-900 mb-2">Verify Your Email</h3>
+                                        <p className="text-gray-500 mb-8">We've sent a 6-digit OTP to <span className="font-bold text-brand-primary">{formData.email}</span></p>
+
+                                        <div className="max-w-xs mx-auto mb-8">
+                                            <label className="block text-sm font-bold text-gray-500 uppercase mb-2 text-left">Enter OTP <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                required
+                                                maxLength="6"
+                                                className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary outline-none text-center text-3xl font-bold tracking-widest uppercase transition-all bg-gray-50 focus:bg-white"
+                                                placeholder="------"
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <p className="text-sm text-gray-600">
+                                            Didn't receive the email?{' '}
+                                            <button type="button" onClick={handleResendOtp} disabled={loading} className="font-bold text-brand-primary hover:text-orange-600 transition-colors disabled:opacity-50">
+                                                Resend OTP
+                                            </button>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Navigation */}
                             <div className="pt-8 border-t border-gray-100 mt-8 flex justify-between items-center bg-white sticky bottom-0">
-                                {step > 1 ? (
+                                {step > 1 && step < 5 ? (
                                     <button type="button" onClick={prevStep} className="px-6 py-2 rounded-lg text-gray-500 font-bold hover:bg-gray-100 transition-colors">
                                         Back
                                     </button>
                                 ) : <div></div>}
 
-                                <button type="submit" disabled={loading} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 flex items-center">
-                                    {loading ? <Spinner className="text-white" /> : step === 4 ? 'Complete Registration' : <>Next Step <ChevronRight size={18} className="ml-1" /></>}
+                                <button type="submit" disabled={loading || (step === 5 && otp.length < 6)} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 flex items-center">
+                                    {loading ? <Spinner className="text-white" /> : step === 4 ? 'Complete Registration' : step === 5 ? 'Verify & Login' : <>Next Step <ChevronRight size={18} className="ml-1" /></>}
                                 </button>
                             </div>
 

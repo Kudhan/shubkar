@@ -135,6 +135,7 @@ exports.getVendorReviews = async (req, res) => {
 
 exports.getMyReviews = async (req, res) => {
     try {
+        const mongoose = require('mongoose');
         // Find the vendor profile for the logged-in user
         const vendorProfile = await mongoose.model('VendorProfile').findOne({ user: req.user.id });
 

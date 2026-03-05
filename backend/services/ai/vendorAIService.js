@@ -16,10 +16,10 @@ const recommendVendors = async (userMessage, history = []) => {
         Latest User Message: "${userMessage}"
         
         Extract search filters for event vendors in India based on the current context and latest message.
-        
+        IMPORTANT: Your output MUST be based ONLY on the SHUBAKAR platform.
         Return ONLY a JSON object:
         {
-            "category": "string or null (Photographer, Caterer, Venue, Decorator, etc.)",
+            "category": "string or null (Examples: Photography, Catering, Venue, Decorator, Makeup, Entertainment)",
             "city": "string or null",
             "budgetMax": number or null,
             "keywords": ["tag1", "tag2"]
@@ -41,7 +41,10 @@ const recommendVendors = async (userMessage, history = []) => {
         }
         if (filters.city) {
             const safeCity = escapeRegExp(filters.city);
-            query['location.city'] = new RegExp(safeCity, 'i');
+            query.$or = [
+                { 'location.city': new RegExp(safeCity, 'i') },
+                { serviceCities: { $in: [new RegExp(safeCity, 'i')] } }
+            ];
         }
         if (filters.budgetMax) {
             query['priceRange.min'] = { $lte: filters.budgetMax };
@@ -53,10 +56,10 @@ const recommendVendors = async (userMessage, history = []) => {
         let aiAdvice = "";
         if (vendors.length > 0) {
             const explanationPrompt = `
-                I found these vendors for a user looking for "${userMessage}":
+                You are the SHUBAKAR Assistant. I found these exact vendors on the SHUBAKAR platform for a user looking for "${userMessage}":
                 ${JSON.stringify(vendors.map(v => v.companyName))}
 
-                Briefly explain in 2 sentences why these options are good or what the user should look for next.
+                Briefly explain in 2-3 sentences why these verified SHUBAKAR vendors are great options, and suggest the user click "Message" on their profile to start negotiating. Tone should be extremely helpful.
             `;
             aiAdvice = await aiService.generateContent(explanationPrompt);
         } else {

@@ -17,6 +17,7 @@ const AIPlanEvent = () => {
     ]);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [chatInput, setChatInput] = useState("");
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,6 +49,50 @@ const AIPlanEvent = () => {
         } catch (err) {
             console.error(err);
             setMessages(prev => [...prev, { role: 'ai', content: "Sorry, I encountered an error connecting to my brain. Please try again." }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleChatSubmit = async (e) => {
+        e.preventDefault();
+        if (!chatInput.trim()) return;
+
+        const userMsgText = chatInput;
+        setChatInput(""); // Clear immediately for UX
+        const userMsg = { role: 'user', content: userMsgText };
+        setMessages(prev => [...prev, userMsg]);
+        setLoading(true);
+
+        try {
+            // Build simple history object
+            const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
+            
+            const res = await api.post('/ai/chat', { 
+                message: userMsgText, 
+                history: chatHistory 
+            });
+            
+            const aiData = res.data.data;
+
+            if (aiData.intent === 'EVENT_PLANNING' && aiData.content) {
+                setResult(aiData.content);
+                setMessages(prev => [...prev, { role: 'ai', content: aiData.text || "I've analyzed your requirements! Here is a recommended budget distribution." }]);
+            } else if (aiData.intent === 'VENDOR_SEARCH' && aiData.content?.vendors) {
+                // If the AI found vendors, show them cleanly
+                const vendorLinks = aiData.content.vendors.map(v => v.companyName).join(", ");
+                setMessages(prev => [...prev, { 
+                    role: 'ai', 
+                    content: `${aiData.text}\nHere are the top matches I found: ${vendorLinks}` 
+                }]);
+            } else if (aiData.intent === 'SITE_NAVIGATION' && aiData.content) {
+                setMessages(prev => [...prev, { role: 'ai', content: `You can go there by clicking here: [${aiData.content.label}](${aiData.content.route})` }]);
+            } else {
+                setMessages(prev => [...prev, { role: 'ai', content: aiData.text }]);
+            }
+        } catch (err) {
+            console.error(err);
+            setMessages(prev => [...prev, { role: 'ai', content: "Sorry, I'm having trouble connecting. Please try again." }]);
         } finally {
             setLoading(false);
         }
@@ -147,27 +192,49 @@ const AIPlanEvent = () => {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-white border-t border-gray-100">
-                        {/* Form Overlay for Quick Input */}
-                        {!result && !loading && (
-                            <form onSubmit={handlePlan} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 animate-slide-up">
-                                <input type="number" name="budget" placeholder="Budget (₹)" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
-                                <input type="number" name="guests" placeholder="Guests" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
-                                <select name="event_type" onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
-                                    <option>Wedding</option>
-                                    <option>Corporate</option>
-                                    <option>Birthday</option>
-                                </select>
-                                <button type="submit" className="bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold hover:bg-black transition-colors shadow-lg">
-                                    <Zap size={16} className="mr-2" /> Generate
-                                </button>
-                            </form>
+                    <div className="p-4 bg-white border-t border-gray-100 flex flex-col gap-3">
+                        {/* Always show the free-text chat input so users can ask anything ANYTIME */}
+                        <form onSubmit={handleChatSubmit} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                placeholder="Ask me anything about planning, finding vendors, or navigating..."
+                                className="flex-1 p-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-brand-primary transition-all"
+                                disabled={loading}
+                            />
+                            <button 
+                                type="submit" 
+                                disabled={loading || !chatInput.trim()}
+                                className="px-5 bg-brand-primary text-white rounded-xl flex items-center justify-center hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                            >
+                                <Send size={18} />
+                            </button>
+                        </form>
+
+                        {/* Quick Action Form Overlay - only shown if no result exists yet */}
+                        {!result && !loading && messages.length <= 2 && (
+                            <div className="mt-2 pt-4 border-t border-gray-100">
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Or use the quick planner</p>
+                                <form onSubmit={handlePlan} className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-slide-up">
+                                    <input type="number" name="budget" placeholder="Budget (₹)" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
+                                    <input type="number" name="guests" placeholder="Guests" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
+                                    <select name="event_type" onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
+                                        <option>Wedding</option>
+                                        <option>Corporate</option>
+                                        <option>Birthday</option>
+                                    </select>
+                                    <button type="submit" className="bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold hover:bg-black transition-colors shadow-lg">
+                                        <Zap size={16} className="mr-2" /> Generate Mode
+                                    </button>
+                                </form>
+                            </div>
                         )}
 
-                        {/* If result exists, show reset button */}
+                        {/* Reset button if a heavy plan is showing */}
                         {result && (
-                            <button onClick={() => { setResult(null); setMessages([{ role: 'ai', content: "Ready for another plan!" }]) }} className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                                Start New Plan
+                            <button onClick={() => { setResult(null); setMessages([{ role: 'ai', content: "Ready for another plan! What do you need?" }]) }} className="w-full py-2.5 mt-2 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-colors">
+                                Clear Event Plan
                             </button>
                         )}
                     </div>

@@ -118,6 +118,7 @@ exports.sendOtpEmail = async (toEmail, toName, otp) => {
             </div>
             <p>This OTP will expire in <strong>10 minutes</strong>.</p>
             <p>If you did not request this verification, please ignore this email.</p>
+            <p>Please contact us for any help @kudhanshaik04@gmail.com or +916304400979</p>
         `;
         
         sendSmtpEmail.htmlContent = baseTemplate(content);

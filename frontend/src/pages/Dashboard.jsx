@@ -30,6 +30,7 @@ const Dashboard = () => {
             setBookings(res.data.data.bookings);
         } catch (err) {
             console.error("Failed to fetch bookings", err);
+            // Error is already handled by api interceptor with toast
         } finally {
             setLoading(false);
         }

@@ -14,7 +14,8 @@ const VendorSearch = () => {
     const [filters, setFilters] = useState({
         serviceType: 'All',
         priceRange: 'All',
-        location: ''
+        rating: 0,
+        sortBy: 'Recommended'
     });
 
     useEffect(() => {
@@ -36,15 +37,73 @@ const VendorSearch = () => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
-    const filteredVendors = vendors.filter(vendor => {
-        const matchesSearch = vendor.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesService = filters.serviceType === 'All' || vendor.services.includes(filters.serviceType);
-        // Add more complex filtering (location, price) as needed
-        return matchesSearch && matchesService;
+    const handleSortChange = (e) => {
+        setFilters(prev => ({ ...prev, sortBy: e.target.value }));
+    };
+
+    let filteredVendors = vendors.filter(vendor => {
+        const searchLower = searchTerm.toLowerCase();
+        
+        // 1. Text Search (Name, Description, Location)
+        const matchesSearch = 
+            vendor.companyName?.toLowerCase().includes(searchLower) ||
+            vendor.description?.toLowerCase().includes(searchLower) ||
+            vendor.location?.city?.toLowerCase().includes(searchLower) ||
+            (vendor.serviceCities && vendor.serviceCities.some(city => city.toLowerCase().includes(searchLower)));
+
+        // 2. Service Type Filter
+        const matchesService = filters.serviceType === 'All' || vendor.services?.includes(filters.serviceType);
+        
+        // 3. Price Filter
+        let matchesPrice = true;
+        const vendorPrice = vendor.priceRange?.min || (typeof vendor.priceRange === 'number' ? vendor.priceRange : 0);
+        
+        if (filters.priceRange !== 'All') {
+            if (filters.priceRange === 'Budget') matchesPrice = vendorPrice <= 50000;
+            else if (filters.priceRange === 'Standard') matchesPrice = vendorPrice > 50000 && vendorPrice <= 150000;
+            else if (filters.priceRange === 'Premium') matchesPrice = vendorPrice > 150000 && vendorPrice <= 300000;
+            else if (filters.priceRange === 'Luxury') matchesPrice = vendorPrice > 300000;
+        }
+
+        // 4. Rating Filter
+        const matchesRating = (vendor.rating?.average || 0) >= filters.rating;
+        
+        return matchesSearch && matchesService && matchesPrice && matchesRating;
+    });
+
+    // Handle Sorting
+    filteredVendors.sort((a, b) => {
+        const priceA = a.priceRange?.min || (typeof a.priceRange === 'number' ? a.priceRange : 0);
+        const priceB = b.priceRange?.min || (typeof b.priceRange === 'number' ? b.priceRange : 0);
+        const ratingA = a.rating?.average || 0;
+        const ratingB = b.rating?.average || 0;
+
+        switch (filters.sortBy) {
+            case 'Price: Low to High':
+                return priceA - priceB;
+            case 'Price: High to Low':
+                return priceB - priceA;
+            case 'Rating: High to Low':
+                return ratingB - ratingA;
+            case 'Recommended':
+            default:
+                // Prioritize verified vendors, then rating, then sort randomly or by date created
+                if (a.isVerified !== b.isVerified) return a.isVerified ? -1 : 1;
+                return ratingB - ratingA;
+        }
     });
 
     const categories = ['All', 'Venue', 'Catering', 'Photography', 'Decoration', 'Music', 'Makeup'];
+
+    const clearFilters = () => {
+        setFilters({
+            serviceType: 'All',
+            priceRange: 'All',
+            rating: 0,
+            sortBy: 'Recommended'
+        });
+        setSearchTerm('');
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
@@ -101,6 +160,14 @@ const VendorSearch = () => {
                             </h3>
 
                             <div className="space-y-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <button 
+                                        onClick={clearFilters}
+                                        className="text-xs font-bold text-brand-primary hover:text-brand-secondary underline"
+                                    >
+                                        Clear All
+                                    </button>
+                                </div>
                                 <div>
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Price Range</label>
                                     <div className="space-y-2">
@@ -118,10 +185,26 @@ const VendorSearch = () => {
                                     <div className="space-y-2">
                                         {[4, 3, 2].map(star => (
                                             <label key={star} className="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" className="form-checkbox text-brand-primary rounded focus:ring-brand-primary" />
+                                                <input 
+                                                    type="radio" 
+                                                    name="rating"
+                                                    onChange={() => toggleFilter('rating', star)}
+                                                    checked={filters.rating === star}
+                                                    className="form-radio text-brand-primary rounded focus:ring-brand-primary" 
+                                                />
                                                 <span className="text-sm text-gray-600 flex items-center">{star}+ <Star size={12} className="ml-1 fill-amber-400 text-amber-400" /></span>
                                             </label>
                                         ))}
+                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="rating"
+                                                onChange={() => toggleFilter('rating', 0)}
+                                                checked={filters.rating === 0}
+                                                className="form-radio text-brand-primary rounded focus:ring-brand-primary" 
+                                            />
+                                            <span className="text-sm text-gray-600 flex items-center">Any Rating</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -134,10 +217,15 @@ const VendorSearch = () => {
                             <p className="text-gray-500 font-medium">Showing <span className="text-gray-900 font-bold">{filteredVendors.length}</span> results</p>
                             <div className="flex items-center space-x-2 text-sm text-gray-500">
                                 <span>Sort by:</span>
-                                <select className="bg-transparent font-semibold text-gray-900 outline-none cursor-pointer">
-                                    <option>Recommended</option>
-                                    <option>Price: Low to High</option>
-                                    <option>Rating: High to Low</option>
+                                <select 
+                                    className="bg-transparent font-semibold text-gray-900 outline-none cursor-pointer p-1"
+                                    value={filters.sortBy}
+                                    onChange={handleSortChange}
+                                >
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Price: Low to High">Price: Low to High</option>
+                                    <option value="Price: High to Low">Price: High to Low</option>
+                                    <option value="Rating: High to Low">Rating: High to Low</option>
                                 </select>
                             </div>
                         </div>
@@ -211,7 +299,11 @@ const VendorSearch = () => {
                                             </div>
 
                                             <div className="flex items-center text-sm text-gray-500 mb-3">
-                                                <MapPin size={14} className="mr-1" /> Mumbai, India
+                                                <MapPin size={14} className="mr-1" /> {
+                                                    vendor.location?.city 
+                                                        ? vendor.location.city.charAt(0).toUpperCase() + vendor.location.city.slice(1).toLowerCase() 
+                                                        : (vendor.serviceCities?.length > 0 ? vendor.serviceCities.map(c => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()).join(', ') : 'Location N/A')
+                                                }
                                             </div>
 
                                             <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1">

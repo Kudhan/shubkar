@@ -38,13 +38,18 @@ exports.createBooking = async (req, res) => {
         }
 
         // Location Check
-        const eventCity = event.location.city;
-        const vendorCity = vendor.location.city;
-        const isLocationMatch =
-            (vendorCity && vendorCity.toLowerCase() === eventCity.toLowerCase()) ||
-            (vendor.serviceCities && vendor.serviceCities.some(city => city.toLowerCase() === eventCity.toLowerCase()));
+        const eventCity = event.location?.city || '';
+        const vendorCity = vendor.location?.city || '';
+        
+        // If event doesn't specify a city, we can either block it or allow it. Letting it pass if we can't verify.
+        let isLocationMatch = true; 
+        if (eventCity) {
+            isLocationMatch =
+                (vendorCity && vendorCity.toLowerCase() === eventCity.toLowerCase()) ||
+                (vendor.serviceCities && vendor.serviceCities.some(city => city && city.toLowerCase() === eventCity.toLowerCase()));
+        }
 
-        if (!isLocationMatch) {
+        if (!isLocationMatch && eventCity) {
             return res.status(400).json({
                 status: 'fail',
                 message: `Vendor does not serve ${eventCity}. Please choose a local vendor.`
@@ -52,8 +57,8 @@ exports.createBooking = async (req, res) => {
         }
 
         // Check Blocked Dates
-        const requestedDate = new Date(date || event.date.startDate);
-        const isBlocked = vendor.blockedDates.some(blockedDate => {
+        const requestedDate = new Date(date || event.date?.startDate);
+        const isBlocked = (vendor.blockedDates || []).some(blockedDate => {
             const bDate = new Date(blockedDate);
             return bDate.toISOString().split('T')[0] === requestedDate.toISOString().split('T')[0];
         });
@@ -130,7 +135,7 @@ exports.createBooking = async (req, res) => {
             quantity,
             selectedAddOns: selectedAddOnsData,
             pricingDetails,
-            date: date || event.date.startDate,
+            date: date || event.date?.startDate || new Date(),
             status: 'inquiry',
             negotiation: {
                 status: 'CUSTOMER_ACCEPTED',
@@ -320,6 +325,12 @@ exports.getBookings = async (req, res) => {
             .populate('customer', 'name')
             .populate('vendor', 'companyName')
             .populate('event', 'title date');
+
+        require('fs').writeFileSync('d:/projects/shubkar/backend/last_bookings_dump.json', JSON.stringify({
+            role: req.user.role,
+            userId: req.user.id,
+            bookings: bookings
+        }, null, 2));
 
         res.status(200).json({
             status: 'success',

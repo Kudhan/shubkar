@@ -206,7 +206,11 @@ const VendorDetails = () => {
                                         </div>
 
                                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
-                                            <span className="flex items-center"><MapPin size={16} className="mr-1 text-gray-400" /> {vendor.location?.city || "Location N/A"}</span>
+                                            <span className="flex items-center"><MapPin size={16} className="mr-1 text-gray-400" /> {
+                                                vendor.location?.city 
+                                                    ? vendor.location.city.charAt(0).toUpperCase() + vendor.location.city.slice(1).toLowerCase() 
+                                                    : (vendor.serviceCities?.length > 0 ? vendor.serviceCities.map(c => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()).join(', ') : 'Location N/A')
+                                            }</span>
                                             <span className="flex items-center"><Star size={16} className="mr-1 text-yellow-500 fill-yellow-500" /> {vendor.rating?.average || "New"} ({vendor.rating?.count || 0} reviews)</span>
                                             <span className="px-2 py-0.5 bg-brand-primary/10 text-brand-primary font-bold rounded text-xs uppercase">{vendor.services?.[0] || "Vendor"}</span>
                                         </div>
@@ -471,7 +475,11 @@ const VendorDetails = () => {
                                 Map Preview
                             </div>
                             <div className="p-4">
-                                <p className="font-bold text-gray-900 text-sm">{vendor.location?.city || "Mumbai, India"}</p>
+                                <p className="font-bold text-gray-900 text-sm">{
+                                    vendor.location?.city 
+                                        ? vendor.location.city.charAt(0).toUpperCase() + vendor.location.city.slice(1).toLowerCase() 
+                                        : (vendor.serviceCities?.length > 0 ? vendor.serviceCities.map(c => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()).join(', ') : 'Location N/A')
+                                }</p>
                                 <p className="text-xs text-gray-500">Service Area</p>
                             </div>
                         </div>

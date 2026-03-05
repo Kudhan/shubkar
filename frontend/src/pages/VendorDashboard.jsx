@@ -15,6 +15,7 @@ const VendorDashboard = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('bookings');
+    const [bookingFilter, setBookingFilter] = useState('all'); // all, pending, confirmed, past
     const [selectedBooking, setSelectedBooking] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -163,11 +164,39 @@ const VendorDashboard = () => {
                 {activeTab === 'bookings' ? (
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                         {/* ... Table Content ... (using strict existing structure) */}
-                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
-                            <h2 className="text-lg font-bold text-gray-900">Recent Requests</h2>
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30 overflow-x-auto no-scrollbar">
+                            <h2 className="text-lg font-bold text-gray-900 mr-4 whitespace-nowrap">Recent Requests</h2>
                             <div className="flex space-x-2 text-sm">
-                                <span className="px-3 py-1 bg-white border rounded-lg text-gray-600 font-medium shadow-sm">All ({bookings.length})</span>
-                                <span className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 font-medium">Pending ({bookings.filter(b => b.status === 'inquiry' || b.status === 'negotiation').length})</span>
+                                <button 
+                                    onClick={() => setBookingFilter('all')}
+                                    className={`px-3 py-1 border rounded-lg font-medium transition-colors whitespace-nowrap ${bookingFilter === 'all' ? 'bg-gray-900 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    All ({bookings.length})
+                                </button>
+                                <button 
+                                    onClick={() => setBookingFilter('inquiry')}
+                                    className={`px-3 py-1 border rounded-lg font-medium transition-colors whitespace-nowrap ${bookingFilter === 'inquiry' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-white text-gray-600 hover:bg-blue-50'}`}
+                                >
+                                    Inquiries ({bookings.filter(b => b.status === 'inquiry').length})
+                                </button>
+                                <button 
+                                    onClick={() => setBookingFilter('negotiation')}
+                                    className={`px-3 py-1 border rounded-lg font-medium transition-colors whitespace-nowrap ${bookingFilter === 'negotiation' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-white text-gray-600 hover:bg-amber-50'}`}
+                                >
+                                    Negotiating ({bookings.filter(b => b.status === 'negotiation').length})
+                                </button>
+                                <button 
+                                    onClick={() => setBookingFilter('confirmed')}
+                                    className={`px-3 py-1 border rounded-lg font-medium transition-colors whitespace-nowrap ${bookingFilter === 'confirmed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-white text-gray-600 hover:bg-emerald-50'}`}
+                                >
+                                    Confirmed ({bookings.filter(b => b.status === 'confirmed').length})
+                                </button>
+                                <button 
+                                    onClick={() => setBookingFilter('past')}
+                                    className={`px-3 py-1 border rounded-lg font-medium transition-colors whitespace-nowrap ${bookingFilter === 'past' ? 'bg-gray-200 text-gray-800 border-gray-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    Past/Cancelled ({bookings.filter(b => ['completed', 'cancelled', 'disputed', 'refunded', 'rejected'].includes(b.status)).length})
+                                </button>
                             </div>
                         </div>
 
@@ -193,16 +222,28 @@ const VendorDashboard = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : bookings.length === 0 ? (
+                            ) : bookings.filter(b => {
+                                if (bookingFilter === 'inquiry') return b.status === 'inquiry';
+                                if (bookingFilter === 'negotiation') return b.status === 'negotiation';
+                                if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+                                if (bookingFilter === 'past') return ['completed', 'cancelled', 'disputed', 'refunded', 'rejected'].includes(b.status);
+                                return true; // 'all'
+                            }).length === 0 ? (
                                 <div className="p-16 text-center">
                                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                                         <MessageSquare size={32} />
                                     </div>
-                                    <h3 className="text-gray-900 font-bold mb-1">No requests yet</h3>
-                                    <p className="text-gray-500">Your profile is visible to thousands of customers.</p>
+                                    <h3 className="text-gray-900 font-bold mb-1">No requests match this filter</h3>
+                                    <p className="text-gray-500">You don't have any bookings in this category right now.</p>
                                 </div>
                             ) : (
-                                bookings.map((booking) => (
+                                bookings.filter(b => {
+                                    if (bookingFilter === 'inquiry') return b.status === 'inquiry';
+                                    if (bookingFilter === 'negotiation') return b.status === 'negotiation';
+                                    if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+                                    if (bookingFilter === 'past') return ['completed', 'cancelled', 'disputed', 'refunded', 'rejected'].includes(b.status);
+                                    return true;
+                                }).map((booking) => (
                                     <div key={booking._id} className="p-6 hover:bg-gray-50 transition-colors group">
                                         <div className="flex flex-col md:flex-row gap-6">
                                             {/* Date Box */}

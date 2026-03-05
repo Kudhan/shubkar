@@ -97,7 +97,7 @@ app.get('/health', (req, res) => {
 });
 
 // Database Connection
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/shubakar';
 
 const connectDB = async (retries = 5, delay = 5000) => {
@@ -161,3 +161,4 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+

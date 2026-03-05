@@ -16,6 +16,7 @@ const EventsPage = () => {
             setEvents(res.data.data.events);
         } catch (err) {
             console.error('Error fetching events', err);
+            // Error is already handled by api interceptor with toast
         } finally {
             setLoading(false);
         }

@@ -1,0 +1,79 @@
+{
+  "role": "customer",
+  "userId": "69a90a59f018f30af69d3837",
+  "bookings": [
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 18000,
+          "message": "This is My Budget that i can afford",
+          "by": "customer",
+          "timestamp": "2026-03-05T05:00:47.494Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "69a90c3ca3c906863ca12498",
+            "timestamp": "2026-03-05T04:53:16.303Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 20000,
+            "message": "Along with the video song",
+            "action": "counter",
+            "_id": "69a90c769edaaf3fb5459011",
+            "timestamp": "2026-03-05T04:54:14.910Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 18000,
+            "message": "This is My Budget that i can afford",
+            "action": "counter",
+            "_id": "69a90cdebef28fe7fc624a35",
+            "timestamp": "2026-03-05T04:55:58.298Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 18000,
+            "action": "accept",
+            "_id": "69a90e0054545c63abaf5744",
+            "timestamp": "2026-03-05T05:00:48.115Z"
+          }
+        ]
+      },
+      "_id": "69a90c3ca3c906863ca12497",
+      "customer": {
+        "_id": "69a90a59f018f30af69d3837",
+        "name": "Rahul"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "event": {
+        "date": {
+          "startDate": "2026-03-15T00:00:00.000Z",
+          "endDate": null
+        },
+        "_id": "69a90c28a3c906863ca12476",
+        "title": "Rahul Birthday",
+        "id": "69a90c28a3c906863ca12476"
+      },
+      "serviceType": "General",
+      "date": "2026-03-15T00:00:00.000Z",
+      "servicePlan": null,
+      "quantity": 1,
+      "selectedAddOns": [],
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-03-05T04:53:16.304Z",
+      "__v": 3,
+      "finalPrice": 18000,
+      "transactionId": "TXN_1772686931539_249"
+    }
+  ]
+}

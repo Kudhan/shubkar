@@ -1,13 +1,14 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
 
 const api = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 10000, // Add 10 second timeout
 });
 
 // Add a request interceptor to inject the token
@@ -30,8 +31,6 @@ api.interceptors.response.use(
             // Handle 401 Unauthorized (Session expired)
             if (error.response.status === 401) {
                 toast.error('Session expired. Please login again.');
-                // Optionally redirect to login, but react-router is not accessible here easily without custom history
-                // window.location.href = '/login'; // Force reload/redirect
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             }
@@ -40,8 +39,9 @@ api.interceptors.response.use(
                 toast.error('Server error. Please try again later.');
             }
         } else if (error.request) {
-            // Network error
-            toast.error('Network error. Check your connection.');
+            // Network error - server not reachable
+            console.error('Network error - Server may be down:', error.message);
+            toast.error('Unable to connect to server. Please check if the backend is running.');
         }
         return Promise.reject(error);
     }

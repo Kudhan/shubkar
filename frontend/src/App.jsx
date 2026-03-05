@@ -23,6 +23,8 @@ import EditEvent from './pages/EditEvent';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import AIChat from './components/AIChat';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 import PublicRoute from './components/PublicRoute';
 
@@ -61,6 +63,10 @@ function App() {
           }}
         />
         <Routes>
+          {/* Unrestricted Public Routes */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+
           {/* Public Routes (Redirect if logged in) */}
           <Route element={<PublicRoute />}>
             <Route path="/" element={<Home />} />

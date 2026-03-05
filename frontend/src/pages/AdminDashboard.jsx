@@ -18,7 +18,11 @@ const AdminDashboard = () => {
 
     const [plans, setPlans] = useState([]);
     const [loadingPlans, setLoadingPlans] = useState(false);
-    const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'plans'
+    const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'plans' | 'payments'
+    
+    // Payments state
+    const [transactions, setTransactions] = useState([]);
+    const [loadingTransactions, setLoadingTransactions] = useState(false);
 
     // Modal States
     const [selectedVendor, setSelectedVendor] = useState(null);
@@ -187,6 +191,22 @@ const AdminDashboard = () => {
         p.vendor?.companyName?.toLowerCase().includes(searchText.toLowerCase())
     );
 
+    // Fetch transactions for payments tab
+    const fetchTransactions = async () => {
+        try {
+            setLoadingTransactions(true);
+            const res = await api.get('/admin/transactions');
+            setTransactions(res.data.data.transactions);
+        } catch (err) {
+            console.error('Failed to fetch transactions:', err);
+        } finally {
+            setLoadingTransactions(false);
+        }
+    };
+
+    // Calculate total revenue
+    const totalRevenue = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+
     return (
         <div className="min-h-screen bg-gray-50 font-primary">
             <Navbar />
@@ -214,6 +234,17 @@ const AdminDashboard = () => {
                                 onClick={() => setActiveTab('plans')}
                                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'plans' ? 'bg-brand-primary text-white shadow-md' : 'text-gray-500 hover:text-brand-primary'}`}>
                                 Service Plans
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setActiveTab('payments');
+                                    // Fetch transactions when switching to payments tab
+                                    if (transactions.length === 0) {
+                                        fetchTransactions();
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'payments' ? 'bg-green-600 text-white shadow-md' : 'text-gray-500 hover:text-green-600'}`}>
+                                Payments
                             </button>
                         </div>
 
@@ -423,7 +454,7 @@ const AdminDashboard = () => {
                             )}
                         </div>
                     </div>
-                ) : (
+                ) : activeTab === 'plans' ? (
                     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
@@ -473,6 +504,100 @@ const AdminDashboard = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                ) : (
+                    // Payments Tab
+                    <div className="space-y-6">
+                        {/* Revenue Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg text-white">
+                                <p className="text-green-100 text-sm font-medium mb-1">Total Revenue</p>
+                                <h3 className="text-3xl font-bold">₹{totalRevenue.toLocaleString()}</h3>
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <p className="text-gray-500 text-sm font-medium mb-1">Total Transactions</p>
+                                <h3 className="text-3xl font-bold text-gray-900">{transactions.length}</h3>
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <p className="text-gray-500 text-sm font-medium mb-1">Completed Payments</p>
+                                <h3 className="text-3xl font-bold text-green-600">{transactions.filter(t => t.status === 'released' || t.status === 'paid').length}</h3>
+                            </div>
+                        </div>
+
+                        {/* Transactions Table */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                                        <tr>
+                                            <th className="p-5">Transaction ID</th>
+                                            <th className="p-5">Customer</th>
+                                            <th className="p-5">Vendor</th>
+                                            <th className="p-5">Service</th>
+                                            <th className="p-5">Amount</th>
+                                            <th className="p-5">Payment Method</th>
+                                            <th className="p-5">Status</th>
+                                            <th className="p-5">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {loadingTransactions ? (
+                                            <tr><td colSpan="8" className="p-10 text-center text-gray-400"><Loader className="animate-spin inline mr-2" /> Loading transactions...</td></tr>
+                                        ) : transactions.length === 0 ? (
+                                            <tr><td colSpan="8" className="p-10 text-center text-gray-500">No transactions found.</td></tr>
+                                        ) : (
+                                            transactions.map((transaction) => (
+                                                <tr key={transaction._id} className="hover:bg-gray-50/80 transition-colors">
+                                                    <td className="p-5">
+                                                        <p className="font-mono text-sm font-bold text-gray-900">
+                                                            {transaction.gatewayTransactionId || transaction._id}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <p className="font-medium text-gray-900">
+                                                            {transaction.booking?.customer?.name || 'N/A'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {transaction.booking?.customer?.email || ''}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <p className="font-medium text-gray-900">
+                                                            {transaction.booking?.vendor?.companyName || 'N/A'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-5 text-gray-600">
+                                                        {transaction.booking?.serviceType || 'N/A'}
+                                                    </td>
+                                                    <td className="p-5 font-bold text-gray-900">
+                                                        ₹{(transaction.amount || 0).toLocaleString()}
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
+                                                            {transaction.paymentMethod || 'Online'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                                                            transaction.status === 'released' || transaction.status === 'paid'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : transaction.status === 'pending'
+                                                                    ? 'bg-amber-100 text-amber-700'
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                            {transaction.status || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-5 text-gray-600">
+                                                        {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : 'N/A'}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}

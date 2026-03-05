@@ -44,8 +44,8 @@ const InvoiceModal = ({ booking, onClose, user }) => {
     };
 
     const amount = booking.finalPrice || booking.pricingDetails?.grandTotal || booking.negotiation?.currentOffer?.price || 0;
-    const tax = amount * 0.18; // Assuming 18% GST for example
-    const total = amount + tax;
+    // Note: Displaying actual paid amount without any additional GST
+    const total = amount;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -135,13 +135,6 @@ const InvoiceModal = ({ booking, onClose, user }) => {
                                     </td>
                                     <td className="py-4 px-6 text-right font-medium text-gray-900">
                                         {formatCurrency(amount)}
-                                    </td>
-                                </tr>
-                                {/* Example Tax Line - Optional */}
-                                <tr>
-                                    <td className="py-4 px-6 text-gray-500">GST (18%)</td>
-                                    <td className="py-4 px-6 text-right text-gray-500">
-                                        {formatCurrency(tax)}
                                     </td>
                                 </tr>
                             </tbody>

@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/dashboard', authMiddleware.protect, authMiddleware.restrictTo('admin', 'superadmin'), statsController.getDashboardStats);
 
 // Get All Transactions for Super Admin
-router.get('/transactions', authMiddleware.protect, authMiddleware.restrictTo('superadmin'), async (req, res) => {
+router.get('/transactions', authMiddleware.protect, authMiddleware.restrictTo('admin', 'superadmin'), async (req, res) => {
     try {
         // First, try to get transactions from Transaction collection
         let transactions = await Transaction.find()

@@ -42,9 +42,17 @@ api.interceptors.response.use(
             // Network error - server not reachable
             console.error('Network error - Server may be down:', error.message);
             toast.error('Unable to connect to server. Please check if the backend is running.');
-        }
-        return Promise.reject(error);
     }
+    return Promise.reject(error);
+  }
 );
+
+export const forgotPassword = async (email) => {
+  return api.post('/auth/forgot-password', { email });
+};
+
+export const resetPassword = async (token, password) => {
+  return api.post('/auth/reset-password', { token, password });
+};
 
 export default api;

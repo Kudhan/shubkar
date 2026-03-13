@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
 import Register from './pages/Register';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import VendorDashboard from './pages/VendorDashboard';
 import VendorRegister from './pages/VendorRegister';
@@ -73,6 +74,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route path="/vendor/register" element={<VendorRegister />} />
           </Route>

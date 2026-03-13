@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import { CreditCard, Lock, ShieldCheck, Loader, CheckCircle, Smartphone, Globe, Wallet } from 'lucide-react';
+import { CreditCard, Lock, ShieldCheck, Loader, CheckCircle, Smartphone, Globe, Wallet, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Checkout = () => {
@@ -22,6 +22,7 @@ const Checkout = () => {
     const [cardCvv, setCardCvv] = useState('');
     const [cardName, setCardName] = useState('');
     const [selectedBank, setSelectedBank] = useState('');
+    const [showCvv, setShowCvv] = useState(false);
 
     useEffect(() => {
         if (!booking) {
@@ -262,13 +263,22 @@ const Checkout = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CVV</label>
+                                                <div className="relative">
                                                     <input
-                                                        type="password"
+                                                        type={showCvv ? "text" : "password"}
                                                         value={cardCvv}
                                                         onChange={(e) => setCardCvv(e.target.value.substring(0, 3))}
                                                         placeholder="123"
-                                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none"
+                                                        className="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none"
                                                     />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowCvv(!showCvv)}
+                                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                    >
+                                                        {showCvv ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                    </button>
+                                                </div>
                                                 </div>
                                             </div>
                                             <div>

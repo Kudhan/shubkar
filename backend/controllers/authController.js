@@ -354,3 +354,77 @@ exports.updatePassword = async (req, res) => {
         });
     }
 };
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ status: 'fail', message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email }).select('+passwordResetToken +passwordResetExpires');
+        
+        if (!user) {
+            return res.status(404).json({ 
+                status: 'fail', 
+                message: 'No account found with that email address' 
+            });
+        }
+        
+        const resetToken = user.createPasswordResetToken();
+        await user.save({ validateBeforeSave: false });
+        
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+        
+        await emailService.sendResetPasswordEmail(user.email, user.name, resetUrl);
+        
+        res.status(200).json({ 
+            status: 'success', 
+            message: 'Password reset link sent to your email. Check your inbox (and spam folder).' 
+        });
+        
+    } catch (err) {
+        res.status(500).json({
+            status: 'fail',
+            message: 'There was an error sending the email. Try again later.'
+        });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        
+        if (!token || !password) {
+            return res.status(400).json({ status: 'fail', message: 'Token and password required' });
+        }
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        
+        const user = await User.findOne({ 
+            passwordResetToken: hashedToken, 
+            passwordResetExpires: { $gt: Date.now() }
+        }).select('+password');
+        
+        if (!user) {
+            return res.status(400).json({ status: 'fail', message: 'Invalid or expired token' });
+        }
+        
+        user.password = password;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+        
+        // Log user in after successful reset
+        createSendToken(user, 200, res);
+        
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+};
+

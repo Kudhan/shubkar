@@ -5,7 +5,7 @@
     {
       "negotiation": {
         "currentOffer": {
-          "timestamp": "2026-03-05T10:22:09.511Z"
+          "timestamp": "2026-03-13T06:58:10.157Z"
         },
         "status": "OPEN",
         "history": []
@@ -33,7 +33,7 @@
     {
       "negotiation": {
         "currentOffer": {
-          "timestamp": "2026-03-05T10:22:09.511Z"
+          "timestamp": "2026-03-13T06:58:10.157Z"
         },
         "status": "OPEN",
         "history": []
@@ -61,7 +61,7 @@
     {
       "negotiation": {
         "currentOffer": {
-          "timestamp": "2026-03-05T10:22:09.512Z"
+          "timestamp": "2026-03-13T06:58:10.158Z"
         },
         "status": "OPEN",
         "currentPrice": 20000,

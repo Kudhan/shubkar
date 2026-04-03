@@ -1,5 +1,596 @@
 {
-  "role": "customer",
-  "userId": "69cf6895ae8058838d8bb7d6",
-  "bookings": []
+  "role": "vendor",
+  "userId": "69412a4defddf804d2b61a43",
+  "bookings": [
+    {
+      "negotiation": {
+        "currentOffer": {
+          "timestamp": "2026-04-03T07:37:09.318Z"
+        },
+        "status": "OPEN",
+        "history": []
+      },
+      "quantity": 1,
+      "_id": "694e16adcc2e591fcb4d76f2",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2025-12-31T00:00:00.000Z",
+      "status": "rejected",
+      "paymentStatus": "pending",
+      "price": 15000,
+      "notes": "",
+      "createdAt": "2025-12-26T05:01:33.511Z",
+      "__v": 0,
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "timestamp": "2026-04-03T07:37:09.319Z"
+        },
+        "status": "OPEN",
+        "history": []
+      },
+      "quantity": 1,
+      "_id": "694e1715cc2e591fcb4d7725",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2025-12-28T00:00:00.000Z",
+      "status": "accepted",
+      "paymentStatus": "pending",
+      "price": 15000,
+      "notes": "Complete the deal",
+      "createdAt": "2025-12-26T05:03:17.408Z",
+      "__v": 0,
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "timestamp": "2026-04-03T07:37:09.322Z"
+        },
+        "status": "OPEN",
+        "currentPrice": 20000,
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "696f122be363a3e31d553d50",
+            "timestamp": "2026-01-20T05:27:07.192Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 20000,
+            "message": "For one day",
+            "action": "counter",
+            "_id": "696f1270e363a3e31d553d86",
+            "timestamp": "2026-01-20T05:28:16.787Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 20000,
+            "message": "",
+            "action": "counter",
+            "_id": "696f12dde363a3e31d553dd5",
+            "timestamp": "2026-01-20T05:30:05.714Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 20000,
+            "action": "accept",
+            "_id": "697095d90074f0767be1af9c",
+            "timestamp": "2026-01-21T09:01:13.644Z"
+          }
+        ]
+      },
+      "quantity": 1,
+      "_id": "696f122be363a3e31d553d4f",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2026-01-22T00:00:00.000Z",
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-01-20T05:27:07.193Z",
+      "__v": 3,
+      "finalPrice": 20000,
+      "transactionId": "TXN_1771413685937_960",
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "timestamp": "2026-04-03T07:37:09.324Z"
+        },
+        "status": "OPEN",
+        "currentPrice": 14850,
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "6970a9a0221109e59e03e5b9",
+            "timestamp": "2026-01-21T10:25:36.413Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 14500,
+            "message": "",
+            "action": "counter",
+            "_id": "6970a9ae221109e59e03e5cc",
+            "timestamp": "2026-01-21T10:25:50.073Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 14800,
+            "message": "",
+            "action": "counter",
+            "_id": "6970a9c8221109e59e03e5f5",
+            "timestamp": "2026-01-21T10:26:16.651Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 14800,
+            "message": "Reduce ThePrice",
+            "action": "counter",
+            "_id": "6970a9ed221109e59e03e61a",
+            "timestamp": "2026-01-21T10:26:53.922Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 14850,
+            "message": "Last Price",
+            "action": "counter",
+            "_id": "6970aa09221109e59e03e64b",
+            "timestamp": "2026-01-21T10:27:21.849Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 14850,
+            "action": "accept",
+            "_id": "6970aa44221109e59e03e678",
+            "timestamp": "2026-01-21T10:28:20.355Z"
+          }
+        ]
+      },
+      "quantity": 1,
+      "_id": "6970a9a0221109e59e03e5b8",
+      "customer": {
+        "_id": "6970a975221109e59e03e5a9",
+        "name": "TestC1"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2026-01-24T00:00:00.000Z",
+      "status": "confirmed",
+      "paymentStatus": "pending",
+      "createdAt": "2026-01-21T10:25:36.414Z",
+      "__v": 5,
+      "finalPrice": 14850,
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 15000,
+          "message": "photos quality must be good",
+          "by": "customer",
+          "timestamp": "2026-01-22T07:01:09.050Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "photos quality must be good",
+            "action": "offer",
+            "_id": "6971cb35bb10186c747a719c",
+            "timestamp": "2026-01-22T07:01:09.048Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 15000,
+            "action": "accept",
+            "_id": "6971cb97bb10186c747a71d4",
+            "timestamp": "2026-01-22T07:02:47.806Z"
+          }
+        ]
+      },
+      "quantity": 1,
+      "_id": "6971cb35bb10186c747a719b",
+      "customer": {
+        "_id": "6971cac2bb10186c747a7169",
+        "name": "shaik musharaf"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2026-01-24T00:00:00.000Z",
+      "status": "confirmed",
+      "paymentStatus": "pending",
+      "createdAt": "2026-01-22T07:01:09.051Z",
+      "__v": 1,
+      "finalPrice": 15000,
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 17500,
+          "message": "",
+          "by": "customer",
+          "timestamp": "2026-01-22T08:23:41.379Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "6971ddfac879211a73340302",
+            "timestamp": "2026-01-22T08:21:14.669Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 20000,
+            "message": "10000",
+            "action": "counter",
+            "_id": "6971de58c879211a73340331",
+            "timestamp": "2026-01-22T08:22:48.651Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 17500,
+            "message": "",
+            "action": "counter",
+            "_id": "6971de78c879211a73340364",
+            "timestamp": "2026-01-22T08:23:20.245Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 17500,
+            "action": "accept",
+            "_id": "6971de8dc879211a733403a6",
+            "timestamp": "2026-01-22T08:23:41.470Z"
+          }
+        ]
+      },
+      "quantity": 1,
+      "_id": "6971ddfac879211a73340301",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "serviceType": "Photography",
+      "date": "2026-01-23T00:00:00.000Z",
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-01-22T08:21:14.669Z",
+      "__v": 3,
+      "finalPrice": 17500,
+      "transactionId": "TXN_1771413833274_398",
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 16000,
+          "message": "",
+          "by": "vendor",
+          "timestamp": "2026-01-22T10:58:59.140Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "Photo Grapher 5000\n",
+            "action": "offer",
+            "_id": "6971fff82e49fb30722e659b",
+            "timestamp": "2026-01-22T10:46:16.719Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 16000,
+            "message": "",
+            "action": "counter",
+            "_id": "697202e45989901ff0c155f6",
+            "timestamp": "2026-01-22T10:58:44.134Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 16000,
+            "action": "accept",
+            "_id": "697202f35989901ff0c15638",
+            "timestamp": "2026-01-22T10:58:59.142Z"
+          }
+        ]
+      },
+      "quantity": 1,
+      "_id": "6971fff82e49fb30722e659a",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "event": {
+        "date": {
+          "startDate": "2026-01-31T00:00:00.000Z",
+          "endDate": null
+        },
+        "_id": "6971ffb32e49fb30722e6586",
+        "title": "Kudhan Birthday",
+        "id": "6971ffb32e49fb30722e6586"
+      },
+      "serviceType": "Photography",
+      "date": "2026-01-31T00:00:00.000Z",
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-01-22T10:46:16.720Z",
+      "__v": 2,
+      "finalPrice": 16000,
+      "transactionId": "TXN_1771413857977_390",
+      "selectedAddOns": []
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 16000,
+          "message": "platinum",
+          "by": "vendor",
+          "timestamp": "2026-03-04T03:38:38.902Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "69948c476c70ff10543bb829",
+            "timestamp": "2026-02-17T15:41:59.063Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 16000,
+            "message": "platinum",
+            "action": "counter",
+            "_id": "69a6f9679568d6e4447f4934",
+            "timestamp": "2026-03-03T15:08:23.526Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 16000,
+            "action": "accept",
+            "_id": "69a7a93ebc2679c083d6a1af",
+            "timestamp": "2026-03-04T03:38:38.903Z"
+          }
+        ]
+      },
+      "_id": "69948c476c70ff10543bb828",
+      "customer": {
+        "_id": "694129aaefddf804d2b61a39",
+        "name": "Kudhan"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "event": {
+        "date": {
+          "startDate": "2026-02-17T00:00:00.000Z",
+          "endDate": null
+        },
+        "_id": "69948c3d6c70ff10543bb7d7",
+        "title": "sk wedding",
+        "id": "69948c3d6c70ff10543bb7d7"
+      },
+      "serviceType": "General",
+      "date": "2026-02-17T00:00:00.000Z",
+      "servicePlan": null,
+      "quantity": 1,
+      "selectedAddOns": [],
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-02-17T15:41:59.063Z",
+      "__v": 2,
+      "finalPrice": 16000,
+      "transactionId": "TXN_1772595586640_458"
+    },
+    {
+      "pricingDetails": {
+        "basePrice": 17999,
+        "addOnsTotal": 2000,
+        "platformFee": 0,
+        "grandTotal": 19999
+      },
+      "negotiation": {
+        "currentOffer": {
+          "price": 20500,
+          "message": "",
+          "by": "customer",
+          "timestamp": "2026-03-04T05:14:26.915Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 19999,
+            "message": "Albums",
+            "action": "offer",
+            "_id": "69a7beb67c3c6258c679c18f",
+            "timestamp": "2026-03-04T05:10:14.477Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 21000,
+            "message": "with albums",
+            "action": "counter",
+            "_id": "69a7bf873b59f281b518e11b",
+            "timestamp": "2026-03-04T05:13:43.621Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 20500,
+            "message": "",
+            "action": "counter",
+            "_id": "69a7bfa280edbd11376b0e8f",
+            "timestamp": "2026-03-04T05:14:10.300Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 20500,
+            "action": "accept",
+            "_id": "69a7bfb37ef65eb62fb2cfb1",
+            "timestamp": "2026-03-04T05:14:27.033Z"
+          }
+        ]
+      },
+      "_id": "69a7beb67c3c6258c679c18d",
+      "customer": {
+        "_id": "69a7bd96bab92ba9aa038b7c",
+        "name": "Test Customer 2"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "event": {
+        "date": {
+          "startDate": "2026-03-08T00:00:00.000Z",
+          "endDate": null
+        },
+        "_id": "69a7be197c3c6258c679c163",
+        "title": "Test Wedding",
+        "id": "69a7be197c3c6258c679c163"
+      },
+      "serviceType": "Gold Package",
+      "date": "2026-03-08T00:00:00.000Z",
+      "servicePlan": "69789f1f5fe98fade25de650",
+      "quantity": 1,
+      "selectedAddOns": [
+        {
+          "name": "Video Song",
+          "price": 2000,
+          "quantity": 1,
+          "total": 2000,
+          "_id": "69a7beb67c3c6258c679c18e"
+        }
+      ],
+      "status": "confirmed",
+      "paymentStatus": "pending",
+      "createdAt": "2026-03-04T05:10:14.477Z",
+      "__v": 3,
+      "finalPrice": 20500
+    },
+    {
+      "negotiation": {
+        "currentOffer": {
+          "price": 18000,
+          "message": "This is My Budget that i can afford",
+          "by": "customer",
+          "timestamp": "2026-03-05T05:00:47.494Z"
+        },
+        "status": "BOTH_ACCEPTED",
+        "history": [
+          {
+            "offeredBy": "customer",
+            "price": 15000,
+            "message": "",
+            "action": "offer",
+            "_id": "69a90c3ca3c906863ca12498",
+            "timestamp": "2026-03-05T04:53:16.303Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 20000,
+            "message": "Along with the video song",
+            "action": "counter",
+            "_id": "69a90c769edaaf3fb5459011",
+            "timestamp": "2026-03-05T04:54:14.910Z"
+          },
+          {
+            "offeredBy": "customer",
+            "price": 18000,
+            "message": "This is My Budget that i can afford",
+            "action": "counter",
+            "_id": "69a90cdebef28fe7fc624a35",
+            "timestamp": "2026-03-05T04:55:58.298Z"
+          },
+          {
+            "offeredBy": "vendor",
+            "price": 18000,
+            "action": "accept",
+            "_id": "69a90e0054545c63abaf5744",
+            "timestamp": "2026-03-05T05:00:48.115Z"
+          }
+        ]
+      },
+      "_id": "69a90c3ca3c906863ca12497",
+      "customer": {
+        "_id": "69a90a59f018f30af69d3837",
+        "name": "Rahul"
+      },
+      "vendor": {
+        "_id": "69412a4defddf804d2b61a45",
+        "companyName": "Ks Photography"
+      },
+      "event": {
+        "date": {
+          "startDate": "2026-03-15T00:00:00.000Z",
+          "endDate": null
+        },
+        "_id": "69a90c28a3c906863ca12476",
+        "title": "Rahul Birthday",
+        "id": "69a90c28a3c906863ca12476"
+      },
+      "serviceType": "General",
+      "date": "2026-03-15T00:00:00.000Z",
+      "servicePlan": null,
+      "quantity": 1,
+      "selectedAddOns": [],
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "createdAt": "2026-03-05T04:53:16.304Z",
+      "__v": 3,
+      "finalPrice": 18000,
+      "transactionId": "TXN_1772686931539_249"
+    }
+  ]
 }

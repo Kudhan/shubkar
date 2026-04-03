@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import { Send, Zap, User, Bot, Sparkles, Loader } from 'lucide-react';
+import { Send, Zap, User, Bot, Sparkles, Loader, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const AIPlanEvent = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +15,7 @@ const AIPlanEvent = () => {
         priority_3: 'Photography',
         city: ''
     });
+    const { user } = useAuth();
     const [servingCities, setServingCities] = useState([]);
 
     useEffect(() => {
@@ -206,20 +209,39 @@ const AIPlanEvent = () => {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-white border-t border-gray-100 flex flex-col gap-3">
+                    <div className="p-4 bg-white border-t border-gray-100 flex flex-col gap-3 relative">
+                        {!user && (
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center p-6 text-center">
+                                <div className="w-12 h-12 bg-brand-primary/10 text-brand-primary rounded-full flex items-center justify-center mb-3">
+                                    <Lock size={24} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 mb-1">Login Required</h4>
+                                <p className="text-sm text-gray-600 mb-4 max-w-sm">
+                                    Please log in to access our AI Event Planning assistant. 
+                                    Logged-in users can generate detailed budget breakdowns and search for local vendors.
+                                </p>
+                                <Link 
+                                    to="/login" 
+                                    className="px-6 py-2 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-primary/90 transition-all transform hover:scale-105"
+                                >
+                                    Login to Continue
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Always show the free-text chat input so users can ask anything ANYTIME */}
                         <form onSubmit={handleChatSubmit} className="flex gap-2">
                             <input
                                 type="text"
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
-                                placeholder="Ask me anything about planning, finding vendors, or navigating..."
+                                placeholder={user ? "Ask me anything about planning, finding vendors, or navigating..." : "Please log in to chat with AI..."}
                                 className="flex-1 p-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-brand-primary transition-all"
-                                disabled={loading}
+                                disabled={loading || !user}
                             />
                             <button 
                                 type="submit" 
-                                disabled={loading || !chatInput.trim()}
+                                disabled={loading || !chatInput.trim() || !user}
                                 className="px-5 bg-brand-primary text-white rounded-xl flex items-center justify-center hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                             >
                                 <Send size={18} />
@@ -231,21 +253,21 @@ const AIPlanEvent = () => {
                             <div className="mt-2 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Or use the quick planner</p>
                                 <form onSubmit={handlePlan} className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-slide-up">
-                                    <input type="number" name="budget" placeholder="Budget (₹)" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
-                                    <input type="number" name="guests" placeholder="Guests" required onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
-                                    <select name="event_type" onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
+                                    <input type="number" name="budget" placeholder="Budget (₹)" required disabled={!user} onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
+                                    <input type="number" name="guests" placeholder="Guests" required disabled={!user} onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary" />
+                                    <select name="event_type" disabled={!user} onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
                                         <option>Wedding</option>
                                         <option>Corporate</option>
                                         <option>Birthday</option>
                                         <option>Anniversary</option>
                                     </select>
-                                    <select name="city" onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
+                                    <select name="city" disabled={!user} onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
                                         <option value="">Select City (Optional)</option>
                                         {servingCities.map(city => (
                                             <option key={city} value={city}>{city}</option>
                                         ))}
                                     </select>
-                                    <button type="submit" className="bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold hover:bg-black transition-colors shadow-lg">
+                                    <button type="submit" disabled={!user} className="bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold hover:bg-black transition-colors shadow-lg">
                                         <Zap size={16} className="mr-2" /> Generate Mode
                                     </button>
                                 </form>

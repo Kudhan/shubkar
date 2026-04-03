@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import { Save, ArrowLeft, Calendar, MapPin, Users, DollarSign, AlertTriangle, Lock } from 'lucide-react';
+import { Save, ArrowLeft, Calendar, MapPin, Users, DollarSign, AlertTriangle, Lock, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Spinner from '../components/ui/Spinner';
 
@@ -22,6 +22,20 @@ const EditEvent = () => {
         guestCount: '',
         budgetTotal: ''
     });
+
+    const [servingCities, setServingCities] = useState([]);
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            try {
+                const res = await api.get('/vendors/serving-cities');
+                setServingCities(res.data.data.cities);
+            } catch (err) {
+                console.error("Failed to fetch serving cities", err);
+            }
+        };
+        fetchCities();
+    }, []);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -218,17 +232,25 @@ const EditEvent = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">City</label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
+                                <div className="relative group">
+                                    <MapPin className="absolute left-3 top-2.5 text-gray-400 group-hover:text-brand-primary" size={18} />
+                                    <select
                                         name="city"
                                         required
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none"
+                                        className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none appearance-none cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
                                         value={formData.city}
                                         onChange={handleChange}
-                                    />
+                                    >
+                                        <option value="" disabled>Select a city...</option>
+                                        {servingCities.map(city => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-3 top-2.5 pointer-events-none text-gray-400">
+                                        <ChevronDown size={18} />
+                                    </div>
                                 </div>
+                                <p className="text-[10px] text-gray-400 mt-1 italic">* Only locations with active Shubakar vendors are listed.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Venue Name</label>

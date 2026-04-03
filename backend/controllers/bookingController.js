@@ -30,6 +30,14 @@ exports.createBooking = async (req, res) => {
             });
         }
 
+        // 1b. Check Event Status
+        if (['completed', 'cancelled'].includes(event.status)) {
+            return res.status(400).json({
+                status: 'fail',
+                message: `This event is already ${event.status}. You cannot book new vendors for it.`
+            });
+        }
+
         // 2. Validate Vendor
         const VendorProfile = require('../models/VendorProfile');
         const vendor = await VendorProfile.findById(vendorId);

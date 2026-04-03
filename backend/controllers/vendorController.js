@@ -119,6 +119,31 @@ exports.searchVendors = async (req, res) => {
     }
 }
 
+exports.getServingCities = async (req, res) => {
+    try {
+        const citiesFromLocation = await VendorProfile.distinct('location.city', { isApproved: true });
+        const citiesFromServiceCities = await VendorProfile.distinct('serviceCities', { isApproved: true });
+        
+        // Merge, filter empty/null, standardize to Title Case, and sort
+        const allCities = [...new Set([...citiesFromLocation, ...citiesFromServiceCities])]
+            .filter(Boolean)
+            .map(city => {
+                const trimmed = city.trim().toLowerCase();
+                return trimmed.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            })
+            .filter((city, index, self) => self.indexOf(city) === index) // Unique again after normalization
+            .sort((a, b) => a.localeCompare(b));
+
+        res.status(200).json({
+            status: 'success',
+            results: allCities.length,
+            data: { cities: allCities }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
 exports.getVendorsForEvent = async (req, res) => {
     try {
         const { eventId } = req.params;

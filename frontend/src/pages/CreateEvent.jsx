@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Calendar, MapPin, Users, DollarSign, Type, ArrowRight, Check } from 'lucide-react';
+import { Calendar, MapPin, Users, DollarSign, Type, ArrowRight, Check, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Spinner from '../components/ui/Spinner';
 
@@ -10,7 +10,6 @@ const CreateEvent = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-
     const [formData, setFormData] = useState({
         title: '',
         eventType: 'Wedding',
@@ -27,6 +26,20 @@ const CreateEvent = () => {
             total: ''
         }
     });
+
+    const [servingCities, setServingCities] = useState([]);
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            try {
+                const res = await api.get('/vendors/serving-cities');
+                setServingCities(res.data.data.cities);
+            } catch (err) {
+                console.error("Failed to fetch serving cities", err);
+            }
+        };
+        fetchCities();
+    }, []);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -165,16 +178,24 @@ const CreateEvent = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
-                                            <input
-                                                type="text"
-                                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
-                                                placeholder="e.g. Mumbai"
+                                        <div className="relative group">
+                                            <MapPin className="absolute left-3 top-3 text-gray-400 group-hover:text-brand-primary transition-colors" size={18} />
+                                            <select
+                                                required
+                                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary appearance-none cursor-pointer hover:bg-white transition-all shadow-sm"
                                                 value={formData.location.city}
                                                 onChange={(e) => handleNestedChange('location', 'city', e.target.value)}
-                                            />
+                                            >
+                                                <option value="" disabled>Select a city...</option>
+                                                {servingCities.map(city => (
+                                                    <option key={city} value={city}>{city}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-3 pointer-events-none text-gray-400">
+                                                <ChevronDown size={18} />
+                                            </div>
                                         </div>
+                                        <p className="text-[10px] text-gray-400 mt-1 italic">* Locations where Shubakar vendors are currently available.</p>
                                     </div>
                                 </div>
 

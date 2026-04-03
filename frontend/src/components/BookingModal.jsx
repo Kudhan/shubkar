@@ -43,14 +43,16 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
             setLoadingEvents(true);
             const res = await api.get('/events');
             const events = res.data.data.events;
-            setUserEvents(events);
+            // Only show active events (planning, draft, confirmed, ongoing)
+            const activeEvents = events.filter(e => !['completed', 'cancelled'].includes(e.status));
+            setUserEvents(activeEvents);
 
             // Auto-select logic
             if (preSelectedEventId) {
-                const event = events.find(e => e._id === preSelectedEventId);
+                const event = activeEvents.find(e => e._id === preSelectedEventId);
                 if (event) selectEvent(event);
-            } else if (events.length > 0) {
-                selectEvent(events[0]);
+            } else if (activeEvents.length > 0) {
+                selectEvent(activeEvents[0]);
             }
         } catch (err) {
             console.error('Failed to fetch events', err);
@@ -262,21 +264,27 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Event</label>
-                                    <select
-                                        required
-                                        disabled={!!preSelectedEventId}
-                                        className="w-full px-3 py-2 border rounded-xl text-sm font-medium outline-none focus:border-gray-900"
-                                        value={formData.eventId}
-                                        onChange={e => {
-                                            const ev = userEvents.find(ev => ev._id === e.target.value);
-                                            selectEvent(ev);
-                                        }}
-                                    >
-                                        <option value="" disabled>Select...</option>
-                                        {userEvents.map(ev => (
-                                            <option key={ev._id} value={ev._id}>{ev.title}</option>
-                                        ))}
-                                    </select>
+                                    {userEvents.length === 0 ? (
+                                        <div className="p-2.5 bg-red-50 border border-red-100 rounded-xl">
+                                             <p className="text-[10px] text-red-600 font-bold leading-tight uppercase tracking-tighter">No Active Events Found. <Link to="/events" className="underline">Create One</Link></p>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            required
+                                            disabled={!!preSelectedEventId}
+                                            className="w-full px-3 py-2 border rounded-xl text-sm font-medium outline-none focus:border-gray-900"
+                                            value={formData.eventId}
+                                            onChange={e => {
+                                                const ev = userEvents.find(ev => ev._id === e.target.value);
+                                                selectEvent(ev);
+                                            }}
+                                        >
+                                            <option value="" disabled>Select...</option>
+                                            {userEvents.map(ev => (
+                                                <option key={ev._id} value={ev._id}>{ev.title}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Date</label>
@@ -350,13 +358,13 @@ const BookingModal = ({ isOpen, onClose, vendor, preSelectedEventId }) => {
                                 <span className="text-2xl font-bold text-gray-900">₹{estimatedPrice.toLocaleString()}</span>
                             </div>
 
-                            <button
+                             <button
                                 type="submit"
-                                disabled={submitting}
-                                className="w-full py-3.5 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-primary/90 transition-all flex justify-center items-center"
+                                disabled={submitting || userEvents.length === 0}
+                                className={`w-full py-3.5 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-primary/90 transition-all flex justify-center items-center ${userEvents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {submitting ? <Spinner size={20} className="mr-2 text-white" /> : null}
-                                {submitting ? 'Sending Request...' : 'Confirm Request'}
+                                {userEvents.length === 0 ? 'Planning Required' : (submitting ? 'Sending Request...' : 'Confirm Request')}
                             </button>
                         </form>
                     </div>

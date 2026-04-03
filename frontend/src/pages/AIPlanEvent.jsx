@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { Send, Zap, User, Bot, Sparkles, Loader } from 'lucide-react';
@@ -10,8 +10,22 @@ const AIPlanEvent = () => {
         event_type: 'Wedding',
         priority_1: 'Venue',
         priority_2: 'Catering',
-        priority_3: 'Photography'
+        priority_3: 'Photography',
+        city: ''
     });
+    const [servingCities, setServingCities] = useState([]);
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            try {
+                const res = await api.get('/vendors/serving-cities');
+                setServingCities(res.data.data.cities);
+            } catch (err) {
+                console.error("Failed to fetch serving cities", err);
+            }
+        };
+        fetchCities();
+    }, []);
     const [messages, setMessages] = useState([
         { role: 'ai', content: "Hello! I'm your Shubakar AI Assistant. I can help you create a perfect budget breakdown for your event. Tell me a bit about what you're planning!" }
     ]);
@@ -28,12 +42,12 @@ const AIPlanEvent = () => {
         setLoading(true);
 
         // Add user message mock
-        const userMsg = { role: 'user', content: `Plan a ${formData.event_type} for ${formData.guests} guests with a budget of ₹${formData.budget}.` };
+        const userMsg = { role: 'user', content: `Plan a ${formData.event_type} for ${formData.guests} guests with a budget of ₹${formData.budget}${formData.city ? ` in ${formData.city}` : ''}.` };
         setMessages(prev => [...prev, userMsg]);
 
         try {
             // Use existing Node.js api setup
-            const prompt = `Plan a ${formData.event_type} for ${formData.guests} guests with a budget of ₹${formData.budget}. Priorities: ${formData.priority_1}, ${formData.priority_2}, ${formData.priority_3}.`;
+            const prompt = `Plan a ${formData.event_type} for ${formData.guests} guests with a budget of ₹${formData.budget}${formData.city ? ` in ${formData.city}` : ''}. Priorities: ${formData.priority_1}, ${formData.priority_2}, ${formData.priority_3}.`;
             const res = await api.post('/ai/chat', { message: prompt, history: [] });
             
             const aiData = res.data.data;
@@ -223,6 +237,13 @@ const AIPlanEvent = () => {
                                         <option>Wedding</option>
                                         <option>Corporate</option>
                                         <option>Birthday</option>
+                                        <option>Anniversary</option>
+                                    </select>
+                                    <select name="city" onChange={handleChange} className="p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white outline-none focus:ring-1 focus:ring-brand-primary">
+                                        <option value="">Select City (Optional)</option>
+                                        {servingCities.map(city => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
                                     </select>
                                     <button type="submit" className="bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold hover:bg-black transition-colors shadow-lg">
                                         <Zap size={16} className="mr-2" /> Generate Mode

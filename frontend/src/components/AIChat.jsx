@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, PieChart, MapPin, Zap, ExternalLink, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { Lock } from 'lucide-react';
 
 const AIChat = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +13,7 @@ const AIChat = () => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const { user } = useAuth();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -214,6 +217,33 @@ const AIChat = () => {
                         <div ref={messagesEndRef} />
                     </div>
 
+                    {/* Login Nudge Overlay for Guests */}
+                    {!user && (
+                        <div className="absolute inset-x-0 bottom-0 top-[72px] bg-white/90 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+                            <div className="w-16 h-16 bg-brand-primary/10 text-brand-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                <Lock size={32} />
+                            </div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Member Service Only</h4>
+                            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                                Our smart AI assistant is available exclusively for registered members. 
+                                Log in to get personalized planning advice and vendor matches!
+                            </p>
+                            <Link 
+                                to="/login" 
+                                onClick={() => setIsOpen(false)}
+                                className="w-full py-3 bg-brand-primary text-white font-bold rounded-2xl shadow-lg shadow-brand-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            >
+                                Sign In to Chat
+                            </Link>
+                            <button 
+                                onClick={() => setIsOpen(false)}
+                                className="mt-4 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+                            >
+                                Maybe Later
+                            </button>
+                        </div>
+                    )}
+
                     {/* Input */}
                     <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex gap-2">
                         <input
@@ -222,8 +252,9 @@ const AIChat = () => {
                             className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-2 text-sm focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
+                            disabled={!user || loading}
                         />
-                        <button type="submit" disabled={!input.trim() || loading} className="p-2.5 bg-brand-primary text-white rounded-xl shadow-lg shadow-brand-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                        <button type="submit" disabled={!input.trim() || loading || !user} className="p-2.5 bg-brand-primary text-white rounded-xl shadow-lg shadow-brand-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                             <Send size={18} />
                         </button>
                     </form>
